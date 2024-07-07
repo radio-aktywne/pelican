@@ -1,0 +1,19 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 0.12.1
+_src_path: gh:radio-aktywne/template-app-litestar
+accountname: radio-aktywne
+appname: emitunes
+description: Emission playlists 💿
+docs: true
+docsurl: https://radio-aktywne.github.io/app-emitunes
+email: it@radioaktywne.pl
+envprefix: EMITUNES
+events: true
+imagename: apps/emitunes
+importname: emitunes
+port: 41000
+registry: true
+releases: true
+reponame: app-emitunes
+repourl: https://github.com/radio-aktywne/app-emitunes
+sse: true
