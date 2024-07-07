@@ -1,0 +1,9 @@
+services:
+  emitunes:
+    build:
+      context: ./
+      network: host
+    environment:
+      - "EMITUNES__SERVER__HOST=${EMITUNES__SERVER__HOST:-0.0.0.0}"
+      - "EMITUNES__SERVER__PORT=${EMITUNES__SERVER__PORT:-41000}"
+    network_mode: host
