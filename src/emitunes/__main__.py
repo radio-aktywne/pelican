@@ -7,6 +7,7 @@ from emitunes.cli import CliBuilder
 from emitunes.config.builder import ConfigBuilder
 from emitunes.config.errors import ConfigError
 from emitunes.console import FallbackConsoleBuilder
+from emitunes.datatunes.migrator import DatatunesMigrator
 from emitunes.server import Server
 
 cli = CliBuilder().build()
@@ -47,12 +48,19 @@ def main(
         raise typer.Exit(2) from e
 
     try:
+        DatatunesMigrator(config).migrate()
+    except Exception as e:
+        console.print("Failed to apply datatunes migrations!")
+        console.print_exception()
+        raise typer.Exit(3) from e
+
+    try:
         server = Server(app, config)
         server.run()
     except Exception as e:
         console.print("Failed to run server!")
         console.print_exception()
-        raise typer.Exit(3) from e
+        raise typer.Exit(4) from e
 
 
 if __name__ == "__main__":

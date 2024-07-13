@@ -23,3 +23,6 @@ __pycache__/
 
 # Environment
 /.venv/
+
+# Prisma binaries
+/prisma/bin/

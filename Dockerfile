@@ -51,6 +51,18 @@ RUN \
     --mount=type=cache,target=/root/.cache/pypoetry/ \
     poetry install --no-interaction --no-root --only main
 
+# Copy Prisma files
+COPY prisma/ prisma/
+
+# Generate Prisma client
+# hadolint ignore=SC2239
+RUN \
+    # Mount Prisma cache
+    --mount=type=cache,target=/root/.cache/prisma/ \
+    # Mount prisma-python cache
+    --mount=type=cache,target=/root/.cache/prisma-python/ \
+    poetry run -- prisma generate
+
 # Copy source
 COPY src/ src/
 

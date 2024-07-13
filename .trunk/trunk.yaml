@@ -21,6 +21,22 @@ lint:
         # Ignore copier answers file
         - "**/.copier-answers.yaml"
   definitions:
+    # Include SQL plugin for prettier
+    - name: prettier
+      files:
+        - typescript
+        - yaml
+        - css
+        - sass
+        - html
+        - markdown
+        - json
+        - javascript
+        - graphql
+        - prettier_supported_configs
+        - sql
+      extra_packages:
+        - "prettier-plugin-sql@0.15.1"
     # Nix formatting check (local)
     - name: nix-fmt-check
       files: [nix]
@@ -76,6 +92,8 @@ lint:
     - nix-flake-check@SYSTEM
     # JS, JSON, YAML, Markdown formatting
     - prettier@3.0.2
+    # Prisma schema formatting
+    - prisma@5.8.0
     # Python linting
     - ruff@0.3.2
     # Shell linting

@@ -5,8 +5,8 @@ title: Index
 
 # emitunes app
 
-Emission playlists 💿
+Emission playlists 💽
 
 ## 💡 About
 
-`emirecords` is a service for managing playlists of songs.
+`emitunes` is a service for managing playlists of songs.

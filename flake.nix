@@ -31,6 +31,7 @@
 
       perSystem = {
         config,
+        lib,
         pkgs,
         system,
         ...
@@ -43,6 +44,11 @@
         trunk = pkgs.trunk-io;
         poetry = pkgs.poetry;
         copier = pkgs.copier;
+        openssl = pkgs.openssl;
+        cacert = pkgs.cacert;
+        usql = pkgs.usql;
+        mc = pkgs.minio-client;
+        s5cmd = pkgs.s5cmd;
         tini = pkgs.tini;
         su-exec = pkgs.su-exec;
       in {
@@ -76,10 +82,16 @@
               trunk
               poetry
               copier
+              openssl
+              cacert
+              usql
+              mc
+              s5cmd
             ];
 
             shellHook = ''
               export TMPDIR=/tmp
+              export PRISMA_DB_URL="postgres://user:''${EMITUNES__DATATUNES__SQL__PASSWORD:-password}@''${EMITUNES__DATATUNES__SQL__HOST:-localhost}:''${EMITUNES__DATATUNES__SQL__PORT:-41000}/database"
             '';
           };
 
@@ -102,11 +114,16 @@
             name = "runtime";
 
             packages = [
+              node
               python
               poetry
+              openssl
+              cacert
               tini
               su-exec
             ];
+
+            LD_LIBRARY_PATH = lib.makeLibraryPath [openssl];
 
             shellHook = ''
               export TMPDIR=/tmp
@@ -146,11 +163,16 @@
             name = "test";
 
             packages = [
+              node
               python
               task
               coreutils
               poetry
+              openssl
+              cacert
             ];
+
+            LD_LIBRARY_PATH = lib.makeLibraryPath [openssl];
 
             shellHook = ''
               export TMPDIR=/tmp

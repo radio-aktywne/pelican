@@ -1,0 +1,25 @@
+datasource db {
+  provider = "cockroachdb"
+  url      = env("PRISMA_DB_URL")
+}
+
+generator client {
+  // Global settings
+  provider = "prisma-client-py"
+
+  // Settings for "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = -1
+}
+
+/// Media data
+model Media {
+  /// Identifier of the media
+  id   String @id(map: "media_pkey") @default(uuid()) @map("id") @db.Uuid
+  /// Name of the media
+  name String @unique(map: "name_unique") @map("name") @db.String(255)
+  /// Type of the media
+  type String @map("type") @db.String(255)
+
+  @@map("media")
+}

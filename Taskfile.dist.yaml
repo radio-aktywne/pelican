@@ -194,21 +194,86 @@ tasks:
         poetry
         version
         {{ .CLI_ARGS | default "minor" }}
-  test:
-    desc: Run tests
+  generate-prisma:
+    desc: Generate Prisma client
     cmds:
       - task: install-internal
       - >
         poetry
         run
         --
+        prisma
+        generate
+        {{ .CLI_ARGS }}
+  test:
+    desc: Run tests
+    cmds:
+      - task: install-internal
+      - task: generate-prisma
+      - >
+        poetry
+        run
+        --
         pytest
+        {{ .CLI_ARGS }}
+  pull-datatunes:
+    desc: Pull datatunes models
+    cmds:
+      - task: install-internal
+      - task: generate-prisma
+      - >
+        poetry
+        run
+        --
+        prisma
+        db
+        pull
+        {{ .CLI_ARGS }}
+  push-datatunes:
+    desc: Push schema to datatunes without migrations
+    cmds:
+      - task: install-internal
+      - task: generate-prisma
+      - >
+        poetry
+        run
+        --
+        prisma
+        db
+        push
+        {{ .CLI_ARGS }}
+  migrate-dev:
+    desc: Apply migrations to datatunes in development mode
+    cmds:
+      - task: install-internal
+      - task: generate-prisma
+      - >
+        poetry
+        run
+        --
+        prisma
+        migrate
+        dev
+        {{ .CLI_ARGS }}
+  migrate:
+    desc: Apply migrations to datatunes in production mode
+    cmds:
+      - task: install-internal
+      - task: generate-prisma
+      - >
+        poetry
+        run
+        --
+        prisma
+        migrate
+        deploy
         {{ .CLI_ARGS }}
   run:
     desc: Run the app
     interactive: true
     cmds:
       - task: install-internal
+      - task: generate-prisma
       - >
         poetry
         run

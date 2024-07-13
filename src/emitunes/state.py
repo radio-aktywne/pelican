@@ -1,6 +1,8 @@
 from litestar.datastructures import State as LitestarState
 
 from emitunes.config.models import Config
+from emitunes.datatunes.service import DatatunesService
+from emitunes.mediatunes.service import MediatunesService
 
 
 class State(LitestarState):
@@ -8,6 +10,10 @@ class State(LitestarState):
 
     Attributes:
         config: Configuration for the application.
+        datatunes: Service for datatunes database.
+        mediatunes: Service for mediatunes database.
     """
 
     config: Config
+    datatunes: DatatunesService
+    mediatunes: MediatunesService
