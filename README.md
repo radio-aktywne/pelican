@@ -2,7 +2,7 @@
 
 <div align="center">
 
-Emission playlists 💿
+Emission playlists 💽
 
 [![Lint](https://github.com/radio-aktywne/app-emitunes/actions/workflows/lint.yaml/badge.svg)](https://github.com/radio-aktywne/app-emitunes/actions/workflows/lint.yaml)
 [![Test](https://github.com/radio-aktywne/app-emitunes/actions/workflows/test.yaml/badge.svg)](https://github.com/radio-aktywne/app-emitunes/actions/workflows/test.yaml)
@@ -16,7 +16,7 @@ Emission playlists 💿
 
 ## 💡 About
 
-`emirecords` is a service for managing playlists of songs.
+`emitunes` is a service for managing playlists of songs.
 
 ## 📄 Further Reading
 
