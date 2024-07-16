@@ -21,11 +21,18 @@ class ValidationError(ServiceError):
     pass
 
 
-class NotFoundError(ServiceError):
+class MediaNotFoundError(ServiceError):
     """Raised when media is not found."""
 
     def __init__(self, id: UUID) -> None:
         super().__init__(f"Media not found: {id}.")
+
+
+class ContentNotFoundError(ServiceError):
+    """Raised when content is not found."""
+
+    def __init__(self, id: UUID) -> None:
+        super().__init__(f"Content not found for media: {id}.")
 
 
 class DatatunesError(ServiceError):

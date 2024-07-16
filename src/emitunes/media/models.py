@@ -1,48 +1,49 @@
 from dataclasses import dataclass
 
-from prisma import models as pm
-from prisma import types as pt
+from emitunes.datatunes import models as dm
+from emitunes.datatunes import types as dt
+from emitunes.mediatunes import models as mm
 
 # Monkey-patching to simplify types
-pt.MediaWhereUniqueInput = (
-    pt._MediaWhereUnique_id_Input | pt._MediaWhereUnique_name_Input
+dt.MediaWhereUniqueInput = (
+    dt._MediaWhereUnique_id_Input | dt._MediaWhereUnique_name_Input
 )
-pt.MediaOrderByInput = (
-    pt._Media_id_OrderByInput
-    | pt._Media_name_OrderByInput
-    | pt._Media_type_OrderByInput
-)
+dt.MediaOrderByInput = dt._Media_id_OrderByInput | dt._Media_name_OrderByInput
 
-Media = pm.Media
+Media = dm.Media
 
-MediaWhereInput = pt.MediaWhereInput
+MediaWhereInput = dt.MediaWhereInput
 
-MediaInclude = pt.MediaInclude
+MediaInclude = dt.MediaInclude
 
-MediaWhereUniqueInput = pt.MediaWhereUniqueInput
+MediaWhereUniqueInput = dt.MediaWhereUniqueInput
 
-MediaOrderByInput = pt.MediaOrderByInput
+MediaOrderByInput = dt.MediaOrderByInput
 
-MediaCreateInput = pt.MediaCreateInput
+MediaCreateInput = dt.MediaCreateInput
 
-MediaUpdateInput = pt.MediaUpdateInput
+MediaUpdateInput = dt.MediaUpdateInput
+
+UploadContent = mm.UploadContent
+
+DownloadContent = mm.DownloadContent
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CountRequest:
     """Request to count media."""
 
     where: MediaWhereInput | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CountResponse:
     """Response for counting media."""
 
     count: int
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ListRequest:
     """Request to list media."""
 
@@ -53,14 +54,14 @@ class ListRequest:
     order: MediaOrderByInput | list[MediaOrderByInput] | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ListResponse:
     """Response for listing media."""
 
     media: list[Media]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class GetRequest:
     """Request to get media."""
 
@@ -68,14 +69,14 @@ class GetRequest:
     include: MediaInclude | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class GetResponse:
     """Response for getting media."""
 
     media: Media | None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CreateRequest:
     """Request to create media."""
 
@@ -83,14 +84,14 @@ class CreateRequest:
     include: MediaInclude | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CreateResponse:
     """Response for creating media."""
 
     media: Media
 
 
-@dataclass
+@dataclass(kw_only=True)
 class UpdateRequest:
     """Request to update media."""
 
@@ -99,14 +100,14 @@ class UpdateRequest:
     include: MediaInclude | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class UpdateResponse:
     """Response for updating media."""
 
     media: Media | None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DeleteRequest:
     """Request to delete media."""
 
@@ -114,8 +115,40 @@ class DeleteRequest:
     include: MediaInclude | None = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DeleteResponse:
     """Response for deleting media."""
 
     media: Media | None
+
+
+@dataclass(kw_only=True)
+class UploadRequest:
+    """Request to upload media content."""
+
+    where: MediaWhereUniqueInput
+    include: MediaInclude | None = None
+    content: UploadContent
+
+
+@dataclass(kw_only=True)
+class UploadResponse:
+    """Response for uploading media content."""
+
+    media: Media | None
+
+
+@dataclass(kw_only=True)
+class DownloadRequest:
+    """Request to download media content."""
+
+    where: MediaWhereUniqueInput
+    include: MediaInclude | None = None
+
+
+@dataclass(kw_only=True)
+class DownloadResponse:
+    """Response for downloading media content."""
+
+    media: Media | None
+    content: DownloadContent | None

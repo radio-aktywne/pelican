@@ -1,39 +1,25 @@
+from collections.abc import AsyncGenerator
 from typing import Annotated, TypeVar
 
 from litestar import Controller as BaseController
-from litestar import delete, get, patch, post
+from litestar import Request, handlers
 from litestar.channels import ChannelsPlugin
+from litestar.datastructures import ResponseHeader
 from litestar.di import Provide
+from litestar.exceptions import InternalServerException
 from litestar.params import Parameter
-from litestar.response import Response
+from litestar.response import Response, Stream
+from litestar.status_codes import HTTP_204_NO_CONTENT
 from pydantic import Json, TypeAdapter
 from pydantic import ValidationError as PydanticValidationError
 
 from emitunes.api.exceptions import BadRequestException, NotFoundException
-from emitunes.api.routes.media.errors import NotFoundError, ValidationError
-from emitunes.api.routes.media.models import (
-    CreateIncludeParameter,
-    CreateRequest,
-    CreateResponse,
-    DeleteIdParameter,
-    DeleteResponse,
-    GetIdParameter,
-    GetIncludeParameter,
-    GetResponse,
-    ListIncludeParameter,
-    ListLimitParameter,
-    ListOffsetParameter,
-    ListOrderParameter,
-    ListResponse,
-    ListWhereParameter,
-    UpdateIdParameter,
-    UpdateIncludeParameter,
-    UpdateRequest,
-    UpdateResponse,
-)
+from emitunes.api.routes.media import errors as e
+from emitunes.api.routes.media import models as m
 from emitunes.api.routes.media.service import Service
 from emitunes.media.service import MediaService
 from emitunes.state import State
+from emitunes.utils.time import httpstringify
 
 T = TypeVar("T")
 
@@ -68,16 +54,16 @@ class Controller(BaseController):
     def _validate_pydantic(self, t: type[T], v: str) -> T:
         try:
             return TypeAdapter(t).validate_python(v)
-        except PydanticValidationError as e:
-            raise BadRequestException(extra=e.errors(include_context=False)) from e
+        except PydanticValidationError as ex:
+            raise BadRequestException(extra=ex.errors(include_context=False)) from ex
 
     def _validate_json(self, t: type[T], v: str) -> T:
         try:
             return TypeAdapter(Json[t]).validate_strings(v)
-        except PydanticValidationError as e:
-            raise BadRequestException(extra=e.errors(include_context=False)) from e
+        except PydanticValidationError as ex:
+            raise BadRequestException(extra=ex.errors(include_context=False)) from ex
 
-    @get(
+    @handlers.get(
         summary="List media",
         description="List media that match the request.",
     )
@@ -85,11 +71,11 @@ class Controller(BaseController):
         self,
         service: Service,
         limit: Annotated[
-            ListLimitParameter,
+            m.ListRequestLimit,
             Parameter(description="Maximum number of media to return.", default=10),
         ] = 10,
         offset: Annotated[
-            ListOffsetParameter,
+            m.ListRequestOffset,
             Parameter(description="Number of media to skip."),
         ] = None,
         where: Annotated[
@@ -104,27 +90,31 @@ class Controller(BaseController):
             str | None,
             Parameter(description="Order to apply to media."),
         ] = None,
-    ) -> Response[ListResponse]:
-        where = self._validate_json(ListWhereParameter, where) if where else None
+    ) -> Response[m.ListResponseResults]:
+        where = self._validate_json(m.ListRequestWhere, where) if where else None
         include = (
-            self._validate_json(ListIncludeParameter, include) if include else None
+            self._validate_json(m.ListRequestInclude, include) if include else None
         )
-        order = self._validate_json(ListOrderParameter, order) if order else None
+        order = self._validate_json(m.ListRequestOrder, order) if order else None
 
         try:
             response = await service.list(
-                limit=limit,
-                offset=offset,
-                where=where,
-                include=include,
-                order=order,
+                m.ListRequest(
+                    limit=limit,
+                    offset=offset,
+                    where=where,
+                    include=include,
+                    order=order,
+                )
             )
-        except ValidationError as e:
-            raise BadRequestException(extra=e.message) from e
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=ex.message) from ex
 
-        return Response(response)
+        results = response.results
 
-    @get(
+        return Response(results)
+
+    @handlers.get(
         "/{id:uuid}",
         summary="Get media",
         description="Get media by ID.",
@@ -132,55 +122,63 @@ class Controller(BaseController):
     async def get(
         self,
         service: Service,
-        id: GetIdParameter,
+        id: m.GetRequestId,
         include: Annotated[
             str | None,
             Parameter(description="Relations to include with media."),
         ] = None,
-    ) -> Response[GetResponse]:
-        include = self._validate_json(GetIncludeParameter, include) if include else None
+    ) -> Response[m.GetResponseMedia]:
+        include = self._validate_json(m.GetRequestInclude, include) if include else None
 
         try:
             response = await service.get(
-                id=id,
-                include=include,
+                m.GetRequest(
+                    id=id,
+                    include=include,
+                )
             )
-        except ValidationError as e:
-            raise BadRequestException(extra=e.message) from e
-        except NotFoundError as e:
-            raise NotFoundException(extra=e.message) from e
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=ex.message) from ex
+        except e.MediaNotFoundError as ex:
+            raise NotFoundException(extra=ex.message) from ex
 
-        return Response(response)
+        media = response.media
 
-    @post(
+        return Response(media)
+
+    @handlers.post(
         summary="Create media",
         description="Create media.",
     )
     async def create(
         self,
         service: Service,
-        data: CreateRequest,
+        data: m.CreateRequestData,
         include: Annotated[
             str | None,
             Parameter(description="Relations to include with media."),
         ] = None,
-    ) -> Response[CreateResponse]:
-        data = self._validate_pydantic(CreateRequest, data)
+    ) -> Response[m.CreateResponseMedia]:
+        data = self._validate_pydantic(m.CreateRequestData, data)
         include = (
-            self._validate_json(CreateIncludeParameter, include) if include else None
+            self._validate_json(m.CreateRequestInclude, include) if include else None
         )
 
         try:
             response = await service.create(
-                data=data,
-                include=include,
+                m.CreateRequest(
+                    data=data,
+                    include=include,
+                )
             )
-        except ValidationError as e:
-            raise BadRequestException(extra=e.message) from e
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=ex.message) from ex
 
-        return Response(response)
+        media = response.media
 
-    @patch(
+        return Response(media)
+
+    @handlers.patch(
         "/{id:uuid}",
         summary="Update media",
         description="Update media by ID.",
@@ -188,32 +186,36 @@ class Controller(BaseController):
     async def update(
         self,
         service: Service,
-        id: UpdateIdParameter,
-        data: UpdateRequest,
+        id: m.UpdateRequestId,
+        data: m.UpdateRequestData,
         include: Annotated[
             str | None,
             Parameter(description="Relations to include with media."),
         ] = None,
-    ) -> Response[UpdateResponse]:
-        data = self._validate_pydantic(UpdateRequest, data)
+    ) -> Response[m.UpdateResponseMedia]:
+        data = self._validate_pydantic(m.UpdateRequestData, data)
         include = (
-            self._validate_json(UpdateIncludeParameter, include) if include else None
+            self._validate_json(m.UpdateRequestInclude, include) if include else None
         )
 
         try:
             response = await service.update(
-                id=id,
-                data=data,
-                include=include,
+                m.UpdateRequest(
+                    data=data,
+                    id=id,
+                    include=include,
+                )
             )
-        except ValidationError as e:
-            raise BadRequestException(extra=e.message) from e
-        except NotFoundError as e:
-            raise NotFoundException(extra=e.message) from e
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=ex.message) from ex
+        except e.MediaNotFoundError as ex:
+            raise NotFoundException(extra=ex.message) from ex
 
-        return Response(response)
+        media = response.media
 
-    @delete(
+        return Response(media)
+
+    @handlers.delete(
         "/{id:uuid}",
         summary="Delete media",
         description="Delete media by ID.",
@@ -221,15 +223,123 @@ class Controller(BaseController):
     async def delete(
         self,
         service: Service,
-        id: DeleteIdParameter,
-    ) -> Response[DeleteResponse]:
+        id: m.DeleteRequestId,
+    ) -> Response[None]:
         try:
-            response = await service.delete(
-                id=id,
+            await service.delete(
+                m.DeleteRequest(
+                    id=id,
+                )
             )
-        except ValidationError as e:
-            raise BadRequestException(extra=e.message) from e
-        except NotFoundError as e:
-            raise NotFoundException(extra=e.message) from e
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=ex.message) from ex
+        except e.MediaNotFoundError as ex:
+            raise NotFoundException(extra=ex.message) from ex
 
-        return Response(response)
+        return Response(None)
+
+    @handlers.put(
+        "/{id:uuid}/content",
+        summary="Upload media content",
+        description="Upload media content by ID.",
+        status_code=HTTP_204_NO_CONTENT,
+    )
+    async def upload(
+        self,
+        service: Service,
+        id: m.UploadRequestId,
+        type: Annotated[
+            str,
+            Parameter(header="Content-Type", description="Content type."),
+        ],
+        request: Request,
+    ) -> Response[None]:
+
+        async def _stream(request: Request) -> AsyncGenerator[bytes, None]:
+            stream = request.stream()
+            while True:
+                try:
+                    chunk = await anext(stream)
+                except (StopAsyncIteration, InternalServerException):
+                    break
+
+                yield chunk
+
+        try:
+            await service.upload(
+                m.UploadRequest(
+                    id=id,
+                    content=m.UploadRequestContent(
+                        type=type,
+                        data=_stream(request),
+                    ),
+                )
+            )
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=ex.message) from ex
+        except e.MediaNotFoundError as ex:
+            raise NotFoundException(extra=ex.message) from ex
+        except e.ContentNotFoundError as ex:
+            raise NotFoundException(extra=ex.message) from ex
+
+        return Response(None)
+
+    @handlers.get(
+        "/{id:uuid}/content",
+        summary="Download media content",
+        description="Download media content by ID.",
+        response_headers=[
+            ResponseHeader(
+                name="Content-Type",
+                description="Content type.",
+                documentation_only=True,
+            ),
+            ResponseHeader(
+                name="Content-Length",
+                description="Content length.",
+                documentation_only=True,
+            ),
+            ResponseHeader(
+                name="ETag",
+                description="Entity tag.",
+                documentation_only=True,
+            ),
+            ResponseHeader(
+                name="Last-Modified",
+                description="Last modified.",
+                documentation_only=True,
+            ),
+        ],
+    )
+    async def download(
+        self,
+        service: Service,
+        id: m.DownloadRequestId,
+    ) -> Stream:
+        try:
+            response = await service.download(
+                m.DownloadRequest(
+                    id=id,
+                )
+            )
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=ex.message) from ex
+        except e.MediaNotFoundError as ex:
+            raise NotFoundException(extra=ex.message) from ex
+        except e.ContentNotFoundError as ex:
+            raise NotFoundException(extra=ex.message) from ex
+
+        content = response.content
+        type = content.type
+        size = content.size
+        tag = content.tag
+        modified = content.modified
+        data = content.data
+
+        headers = {
+            "Content-Type": type,
+            "Content-Length": str(size),
+            "ETag": tag,
+            "Last-Modified": httpstringify(modified),
+        }
+        return Stream(data, headers=headers)

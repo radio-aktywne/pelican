@@ -3,7 +3,6 @@ CREATE TABLE
   "media" (
     "id" UUID NOT NULL,
     "name" STRING(255) NOT NULL,
-    "type" STRING(255) NOT NULL,
     CONSTRAINT "media_pkey" PRIMARY KEY ("id")
   );
 

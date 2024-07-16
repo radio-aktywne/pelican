@@ -1,9 +1,9 @@
-from collections.abc import AsyncIterable
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import datetime
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Object:
     """Object model."""
 
@@ -14,7 +14,26 @@ class Object:
     type: str | None
 
 
-@dataclass
+@dataclass(kw_only=True)
+class UploadContent:
+    """Content model for upload."""
+
+    type: str
+    data: AsyncIterator[bytes]
+
+
+@dataclass(kw_only=True)
+class DownloadContent:
+    """Content model for download."""
+
+    type: str
+    size: int
+    tag: str
+    modified: datetime
+    data: AsyncIterator[bytes]
+
+
+@dataclass(kw_only=True)
 class ListRequest:
     """Request for listing objects."""
 
@@ -22,45 +41,44 @@ class ListRequest:
     recursive: bool = True
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ListResponse:
     """Response for listing objects."""
 
-    objects: AsyncIterable[Object]
+    objects: AsyncIterator[Object]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class UploadRequest:
     """Request for uploading an object."""
 
     name: str
-    data: AsyncIterable[bytes]
-    type: str | None = None
+    content: UploadContent
     chunk: int = 5 * (1024**2)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class UploadResponse:
     """Response for uploading an object."""
 
     object: Object
 
 
-@dataclass
+@dataclass(kw_only=True)
 class GetRequest:
     """Request for getting an object."""
 
     name: str
 
 
-@dataclass
+@dataclass(kw_only=True)
 class GetResponse:
     """Response for getting an object."""
 
     object: Object
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DownloadRequest:
     """Request for downloading object's data."""
 
@@ -68,14 +86,14 @@ class DownloadRequest:
     chunk: int = 5 * (1024**2)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DownloadResponse:
     """Response for downloading object's data."""
 
-    data: AsyncIterable[bytes]
+    content: DownloadContent
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CopyRequest:
     """Request for copying an object."""
 
@@ -83,21 +101,21 @@ class CopyRequest:
     destination: str
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CopyResponse:
     """Response for copying an object."""
 
     object: Object
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DeleteRequest:
     """Request for deleting an object."""
 
     name: str
 
 
-@dataclass
+@dataclass(kw_only=True)
 class DeleteResponse:
     """Response for deleting an object."""
 

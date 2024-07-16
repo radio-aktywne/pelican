@@ -13,6 +13,7 @@ from emitunes.mediatunes import errors as e
 from emitunes.mediatunes import models as m
 from emitunes.utils import asyncify, syncify
 from emitunes.utils.read import ReadableIterator
+from emitunes.utils.time import httpparse
 
 
 class ErrorCodes(StrEnum):
@@ -61,17 +62,19 @@ class MediatunesService:
             raise e.MediatunesError(str(ex)) from ex
 
         objects = (self._map_object(object) for object in objects)
-        objects = asyncify.iterable(objects)
-        return m.ListResponse(objects=objects)
+        objects = asyncify.iterator(objects)
+        return m.ListResponse(
+            objects=objects,
+        )
 
     async def upload(self, request: m.UploadRequest) -> m.UploadResponse:
         """Upload an object."""
 
         bucket = self._bucket
         name = request.name
-        data = ReadableIterator(iter(syncify.iterable(request.data)))
+        data = ReadableIterator(syncify.iterator(request.content.data))
         length = -1
-        type = request.type
+        type = request.content.type
         chunk = request.chunk
 
         try:
@@ -87,9 +90,17 @@ class MediatunesService:
         except MinioException as ex:
             raise e.MediatunesError(str(ex)) from ex
 
-        req = m.GetRequest(name=name)
-        res = await self.get(req)
-        return m.UploadResponse(object=res.object)
+        response = await self.get(
+            m.GetRequest(
+                name=name,
+            )
+        )
+
+        object = response.object
+
+        return m.UploadResponse(
+            object=object,
+        )
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get an object."""
@@ -112,7 +123,10 @@ class MediatunesService:
             raise e.MediatunesError(str(ex)) from ex
 
         object = self._map_object(object)
-        return m.GetResponse(object=object)
+
+        return m.GetResponse(
+            object=object,
+        )
 
     async def download(self, request: m.DownloadRequest) -> m.DownloadResponse:
         """Download an object."""
@@ -143,9 +157,24 @@ class MediatunesService:
                 response.close()
                 response.release_conn()
 
+        type = response.headers["Content-Type"]
+        size = int(response.headers["Content-Length"])
+        tag = response.headers["ETag"]
+        modified = httpparse(response.headers["Last-Modified"])
+
         chunk = request.chunk
-        data = asyncify.iterable(_data(response, chunk))
-        return m.DownloadResponse(data=data)
+        data = asyncify.iterator(_data(response, chunk))
+
+        content = m.DownloadContent(
+            type=type,
+            size=size,
+            tag=tag,
+            modified=modified,
+            data=data,
+        )
+        return m.DownloadResponse(
+            content=content,
+        )
 
     async def copy(self, request: m.CopyRequest) -> m.CopyResponse:
         """Copy an object."""
@@ -169,9 +198,17 @@ class MediatunesService:
         except MinioException as ex:
             raise e.MediatunesError(str(ex)) from ex
 
-        req = m.GetRequest(name=destination)
-        res = await self.get(req)
-        return m.CopyResponse(object=res.object)
+        response = await self.get(
+            m.GetRequest(
+                name=destination,
+            )
+        )
+
+        object = response.object
+
+        return m.CopyResponse(
+            object=object,
+        )
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete an object."""
@@ -179,10 +216,13 @@ class MediatunesService:
         bucket = self._bucket
         name = request.name
 
-        req = m.GetRequest(name=name)
-        res = await self.get(req)
+        response = await self.get(
+            m.GetRequest(
+                name=name,
+            )
+        )
 
-        object = res.object
+        object = response.object
 
         if object is None:
             raise e.NotFoundError(name)
@@ -201,4 +241,6 @@ class MediatunesService:
         except MinioException as ex:
             raise e.MediatunesError(str(ex)) from ex
 
-        return m.DeleteResponse(object=object)
+        return m.DeleteResponse(
+            object=object,
+        )

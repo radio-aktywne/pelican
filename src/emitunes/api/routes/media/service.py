@@ -11,22 +11,21 @@ class Service:
     def __init__(self, media: MediaService) -> None:
         self._media = media
 
-    async def list(
-        self,
-        limit: m.ListLimitParameter,
-        offset: m.ListOffsetParameter,
-        where: m.ListWhereParameter,
-        include: m.ListIncludeParameter,
-        order: m.ListOrderParameter,
-    ) -> m.ListResponse:
+    async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List media."""
 
-        request = mm.CountRequest(
-            where=where,
-        )
+        limit = request.limit
+        offset = request.offset
+        where = request.where
+        include = request.include
+        order = request.order
 
         try:
-            response = await self._media.count(request)
+            response = await self._media.count(
+                mm.CountRequest(
+                    where=where,
+                )
+            )
         except me.ValidationError as error:
             raise e.ValidationError(error.message) from error
         except me.DatatunesError as error:
@@ -38,16 +37,16 @@ class Service:
 
         count = response.count
 
-        request = mm.ListRequest(
-            limit=limit,
-            offset=offset,
-            where=where,
-            include=include,
-            order=order,
-        )
-
         try:
-            response = await self._media.list(request)
+            response = await self._media.list(
+                mm.ListRequest(
+                    limit=limit,
+                    offset=offset,
+                    where=where,
+                    include=include,
+                    order=order,
+                )
+            )
         except me.ValidationError as error:
             raise e.ValidationError(error.message) from error
         except me.DatatunesError as error:
@@ -57,29 +56,33 @@ class Service:
         except me.ServiceError as error:
             raise e.ServiceError(error.message) from error
 
-        return m.ListResponse(
+        media = response.media
+
+        results = m.ListResponseResults(
             count=count,
             limit=limit,
             offset=offset,
-            media=response.media,
+            media=media,
+        )
+        return m.ListResponse(
+            results=results,
         )
 
-    async def get(
-        self,
-        id: m.GetIdParameter,
-        include: m.GetIncludeParameter,
-    ) -> m.GetResponse:
+    async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get media."""
 
-        request = mm.GetRequest(
-            where={
-                "id": str(id),
-            },
-            include=include,
-        )
+        id = request.id
+        include = request.include
 
         try:
-            response = await self._media.get(request)
+            response = await self._media.get(
+                mm.GetRequest(
+                    where={
+                        "id": str(id),
+                    },
+                    include=include,
+                )
+            )
         except me.ValidationError as error:
             raise e.ValidationError(error.message) from error
         except me.DatatunesError as error:
@@ -92,24 +95,25 @@ class Service:
         media = response.media
 
         if media is None:
-            raise e.NotFoundError(id)
+            raise e.MediaNotFoundError(id)
 
-        return media
+        return m.GetResponse(
+            media=media,
+        )
 
-    async def create(
-        self,
-        data: m.CreateRequest,
-        include: m.CreateIncludeParameter,
-    ) -> m.CreateResponse:
+    async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create media."""
 
-        request = mm.CreateRequest(
-            data=data,
-            include=include,
-        )
+        data = request.data
+        include = request.include
 
         try:
-            response = await self._media.create(request)
+            response = await self._media.create(
+                mm.CreateRequest(
+                    data=data,
+                    include=include,
+                )
+            )
         except me.ValidationError as error:
             raise e.ValidationError(error.message) from error
         except me.DatatunesError as error:
@@ -119,26 +123,29 @@ class Service:
         except me.ServiceError as error:
             raise e.ServiceError(error.message) from error
 
-        return response.media
+        media = response.media
 
-    async def update(
-        self,
-        id: m.UpdateIdParameter,
-        data: m.UpdateRequest,
-        include: m.UpdateIncludeParameter,
-    ) -> m.UpdateResponse:
+        return m.CreateResponse(
+            media=media,
+        )
+
+    async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update media."""
 
-        request = mm.UpdateRequest(
-            data=data,
-            where={
-                "id": str(id),
-            },
-            include=include,
-        )
+        data = request.data
+        id = request.id
+        include = request.include
 
         try:
-            response = await self._media.update(request)
+            response = await self._media.update(
+                mm.UpdateRequest(
+                    data=data,
+                    where={
+                        "id": str(id),
+                    },
+                    include=include,
+                )
+            )
         except me.ValidationError as error:
             raise e.ValidationError(error.message) from error
         except me.DatatunesError as error:
@@ -151,24 +158,25 @@ class Service:
         media = response.media
 
         if media is None:
-            raise e.NotFoundError(id)
+            raise e.MediaNotFoundError(id)
 
-        return media
+        return m.UpdateResponse(
+            media=media,
+        )
 
-    async def delete(
-        self,
-        id: m.DeleteIdParameter,
-    ) -> m.DeleteResponse:
+    async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete media."""
 
-        request = mm.DeleteRequest(
-            where={
-                "id": str(id),
-            },
-        )
+        id = request.id
 
         try:
-            response = await self._media.delete(request)
+            response = await self._media.delete(
+                mm.DeleteRequest(
+                    where={
+                        "id": str(id),
+                    },
+                )
+            )
         except me.ValidationError as error:
             raise e.ValidationError(error.message) from error
         except me.DatatunesError as error:
@@ -181,6 +189,73 @@ class Service:
         media = response.media
 
         if media is None:
-            raise e.NotFoundError(id)
+            raise e.MediaNotFoundError(id)
 
-        return None
+        return m.DeleteResponse()
+
+    async def upload(self, request: m.UploadRequest) -> m.UploadResponse:
+        """Upload media content."""
+
+        id = request.id
+        content = request.content
+
+        try:
+            response = await self._media.upload(
+                mm.UploadRequest(
+                    where={
+                        "id": str(id),
+                    },
+                    content=content,
+                )
+            )
+        except me.ValidationError as error:
+            raise e.ValidationError(error.message) from error
+        except me.DatatunesError as error:
+            raise e.DatatunesError(error.message) from error
+        except me.MediatunesError as error:
+            raise e.MediatunesError(error.message) from error
+        except me.ServiceError as error:
+            raise e.ServiceError(error.message) from error
+
+        media = response.media
+
+        if media is None:
+            raise e.MediaNotFoundError(id)
+
+        return m.UploadResponse()
+
+    async def download(self, request: m.DownloadRequest) -> m.DownloadResponse:
+        """Download media content."""
+
+        id = request.id
+
+        try:
+            response = await self._media.download(
+                mm.DownloadRequest(
+                    where={
+                        "id": str(id),
+                    },
+                )
+            )
+        except me.ValidationError as error:
+            raise e.ValidationError(error.message) from error
+        except me.DatatunesError as error:
+            raise e.DatatunesError(error.message) from error
+        except me.MediatunesError as error:
+            raise e.MediatunesError(error.message) from error
+        except me.ServiceError as error:
+            raise e.ServiceError(error.message) from error
+
+        media = response.media
+
+        if media is None:
+            raise e.MediaNotFoundError(id)
+
+        content = response.content
+
+        if content is None:
+            raise e.ContentNotFoundError(id)
+
+        return m.DownloadResponse(
+            content=content,
+        )
