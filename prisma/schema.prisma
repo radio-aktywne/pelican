@@ -18,8 +18,6 @@ model Media {
   id   String @id(map: "media_pkey") @default(uuid()) @map("id") @db.Uuid
   /// Name of the media
   name String @unique(map: "name_unique") @map("name") @db.String(255)
-  /// Type of the media
-  type String @map("type") @db.String(255)
 
   @@map("media")
 }

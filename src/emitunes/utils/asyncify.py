@@ -1,18 +1,17 @@
 import asyncio
-from collections.abc import AsyncIterable, Iterable
+from collections.abc import AsyncIterator, Iterator
 from typing import TypeVar
 
 T = TypeVar("T")
 
 
-async def iterable(it: Iterable[T]) -> AsyncIterable[T]:
-    """Convert an iterable to an async iterable."""
+async def iterator(it: Iterator[T]) -> AsyncIterator[T]:
+    """Convert an iterator to an async iterator."""
 
-    iterator = await asyncio.to_thread(iter, it)
     sentinel = object()
 
     while True:
-        item = await asyncio.to_thread(next, iterator, sentinel)
+        item = await asyncio.to_thread(next, it, sentinel)
 
         if item is sentinel:
             break

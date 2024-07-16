@@ -32,22 +32,34 @@ class MediaService:
     def _emit_created_event(self, media: m.Media) -> None:
         """Emit a media created event."""
 
-        data = ev.MediaCreatedEventData(media=media)
-        event = ev.MediaCreatedEvent(data=data)
+        data = ev.MediaCreatedEventData(
+            media=media,
+        )
+        event = ev.MediaCreatedEvent(
+            data=data,
+        )
         self._emit_event(event)
 
     def _emit_updated_event(self, media: m.Media) -> None:
         """Emit a media updated event."""
 
-        data = ev.MediaUpdatedEventData(media=media)
-        event = ev.MediaUpdatedEvent(data=data)
+        data = ev.MediaUpdatedEventData(
+            media=media,
+        )
+        event = ev.MediaUpdatedEvent(
+            data=data,
+        )
         self._emit_event(event)
 
     def _emit_deleted_event(self, media: m.Media) -> None:
         """Emit a media deleted event."""
 
-        data = ev.MediaDeletedEventData(media=media)
-        event = ev.MediaDeletedEvent(data=data)
+        data = ev.MediaDeletedEventData(
+            media=media,
+        )
+        event = ev.MediaDeletedEvent(
+            data=data,
+        )
         self._emit_event(event)
 
     async def count(self, request: m.CountRequest) -> m.CountResponse:
@@ -64,7 +76,9 @@ class MediaService:
         except de.DatatunesError as ex:
             raise e.DatatunesError(str(ex)) from ex
 
-        return m.CountResponse(count=count)
+        return m.CountResponse(
+            count=count,
+        )
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List all media."""
@@ -88,7 +102,9 @@ class MediaService:
         except de.DatatunesError as ex:
             raise e.DatatunesError(str(ex)) from ex
 
-        return m.ListResponse(media=media)
+        return m.ListResponse(
+            media=media,
+        )
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get media."""
@@ -106,7 +122,9 @@ class MediaService:
         except de.DatatunesError as ex:
             raise e.DatatunesError(str(ex)) from ex
 
-        return m.GetResponse(media=media)
+        return m.GetResponse(
+            media=media,
+        )
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create media."""
@@ -125,7 +143,10 @@ class MediaService:
             raise e.DatatunesError(str(ex)) from ex
 
         self._emit_created_event(media)
-        return m.CreateResponse(media=media)
+
+        return m.CreateResponse(
+            media=media,
+        )
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update media."""
@@ -180,7 +201,10 @@ class MediaService:
                     raise e.MediatunesError(str(ex)) from ex
 
         self._emit_updated_event(new)
-        return m.UpdateResponse(media=new)
+
+        return m.UpdateResponse(
+            media=new,
+        )
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete media."""
@@ -200,7 +224,9 @@ class MediaService:
                 raise e.DatatunesError(str(ex)) from ex
 
             if media is None:
-                return m.DeleteResponse(media=None)
+                return m.DeleteResponse(
+                    media=None,
+                )
 
             try:
                 await self._mediatunes.delete(
@@ -214,4 +240,85 @@ class MediaService:
                 raise e.MediatunesError(str(ex)) from ex
 
         self._emit_deleted_event(media)
-        return m.DeleteResponse(media=media)
+
+        return m.DeleteResponse(
+            media=media,
+        )
+
+    async def upload(self, request: m.UploadRequest) -> m.UploadResponse:
+        """Upload media content."""
+
+        where = request.where
+        include = request.include
+        content = request.content
+
+        try:
+            media = await self._datatunes.media.find_unique(
+                where=where,
+                include=include,
+            )
+        except de.DataError as ex:
+            raise e.ValidationError(str(ex)) from ex
+        except de.DatatunesError as ex:
+            raise e.DatatunesError(str(ex)) from ex
+
+        if media is None:
+            return m.UploadResponse(
+                media=None,
+            )
+
+        try:
+            await self._mediatunes.upload(
+                mm.UploadRequest(
+                    name=media.id,
+                    content=content,
+                )
+            )
+        except me.MediatunesError as ex:
+            raise e.MediatunesError(str(ex)) from ex
+
+        return m.UploadResponse(
+            media=media,
+        )
+
+    async def download(self, request: m.DownloadRequest) -> m.DownloadResponse:
+        """Download media content."""
+
+        where = request.where
+        include = request.include
+
+        try:
+            media = await self._datatunes.media.find_unique(
+                where=where,
+                include=include,
+            )
+        except de.DataError as ex:
+            raise e.ValidationError(str(ex)) from ex
+        except de.DatatunesError as ex:
+            raise e.DatatunesError(str(ex)) from ex
+
+        if media is None:
+            return m.DownloadResponse(
+                media=None,
+                content=None,
+            )
+
+        try:
+            response = await self._mediatunes.download(
+                mm.DownloadRequest(
+                    name=media.id,
+                )
+            )
+            content = response.content
+        except me.NotFoundError:
+            return m.DownloadResponse(
+                media=media,
+                content=None,
+            )
+        except me.MediatunesError as ex:
+            raise e.MediatunesError(str(ex)) from ex
+
+        return m.DownloadResponse(
+            media=media,
+            content=content,
+        )
