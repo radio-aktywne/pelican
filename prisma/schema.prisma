@@ -21,3 +21,13 @@ model Media {
 
   @@map("media")
 }
+
+/// Playlist data
+model Playlist {
+  /// Identifier of the playlist
+  id   String @id(map: "playlists_pkey") @default(uuid()) @map("id") @db.Uuid
+  /// Name of the playlist
+  name String @unique(map: "name_unique") @map("name") @db.String(255)
+
+  @@map("playlists")
+}
