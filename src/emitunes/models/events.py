@@ -5,6 +5,7 @@ from pydantic import Field, RootModel
 
 from emitunes.media import models as mm
 from emitunes.models.base import SerializableModel
+from emitunes.playlists import models as pm
 from emitunes.utils.time import naiveutcnow
 
 TypeType = TypeVar("TypeType")
@@ -107,8 +108,94 @@ class MediaDeletedEvent(SerializableModel):
     )
 
 
+class PlaylistCreatedEventData(SerializableModel):
+    """Data of a playlist created event."""
+
+    playlist: pm.Playlist = Field(
+        ...,
+        title="PlaylistCreatedEventData.Playlist",
+        description="Playlist that was created.",
+    )
+
+
+class PlaylistCreatedEvent(SerializableModel):
+    """Event that is emitted when playlist is created."""
+
+    type: TypeFieldType[Literal["playlist-created"]] = Field(
+        "playlist-created",
+        title="PlaylistCreatedEvent.Type",
+    )
+    created_at: CreatedAtFieldType = Field(
+        ...,
+        title="PlaylistCreatedEvent.CreatedAt",
+    )
+    data: DataFieldType[PlaylistCreatedEventData] = Field(
+        ...,
+        title="PlaylistCreatedEvent.Data",
+    )
+
+
+class PlaylistUpdatedEventData(SerializableModel):
+    """Data of a playlist updated event."""
+
+    playlist: pm.Playlist = Field(
+        ...,
+        title="PlaylistUpdatedEventData.Playlist",
+        description="Playlist that was updated.",
+    )
+
+
+class PlaylistUpdatedEvent(SerializableModel):
+    """Event that is emitted when playlist is updated."""
+
+    type: TypeFieldType[Literal["playlist-updated"]] = Field(
+        "playlist-updated",
+        title="PlaylistUpdatedEvent.Type",
+    )
+    created_at: CreatedAtFieldType = Field(
+        ...,
+        title="PlaylistUpdatedEvent.CreatedAt",
+    )
+    data: DataFieldType[PlaylistUpdatedEventData] = Field(
+        ...,
+        title="PlaylistUpdatedEvent.Data",
+    )
+
+
+class PlaylistDeletedEventData(SerializableModel):
+    """Data of a playlist deleted event."""
+
+    playlist: pm.Playlist = Field(
+        ...,
+        title="PlaylistDeletedEventData.Playlist",
+        description="Playlist that was deleted.",
+    )
+
+
+class PlaylistDeletedEvent(SerializableModel):
+    """Event that is emitted when playlist is deleted."""
+
+    type: TypeFieldType[Literal["playlist-deleted"]] = Field(
+        "playlist-deleted",
+        title="PlaylistDeletedEvent.Type",
+    )
+    created_at: CreatedAtFieldType = Field(
+        ...,
+        title="PlaylistDeletedEvent.CreatedAt",
+    )
+    data: DataFieldType[PlaylistDeletedEventData] = Field(
+        ...,
+        title="PlaylistDeletedEvent.Data",
+    )
+
+
 Event = Annotated[
-    MediaCreatedEvent | MediaUpdatedEvent | MediaDeletedEvent,
+    MediaCreatedEvent
+    | MediaUpdatedEvent
+    | MediaDeletedEvent
+    | PlaylistCreatedEvent
+    | PlaylistUpdatedEvent
+    | PlaylistDeletedEvent,
     Field(..., discriminator="type"),
 ]
 ParsableEvent = RootModel[Event]

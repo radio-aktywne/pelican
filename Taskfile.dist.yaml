@@ -205,11 +205,18 @@ tasks:
         prisma
         generate
         {{ .CLI_ARGS }}
+  generate-prisma-internal:
+    desc: Generate Prisma client
+    internal: true
+    cmds:
+      - task: generate-prisma
+        vars:
+          CLI_ARGS: ""
   test:
     desc: Run tests
     cmds:
       - task: install-internal
-      - task: generate-prisma
+      - task: generate-prisma-internal
       - >
         poetry
         run
@@ -220,7 +227,7 @@ tasks:
     desc: Pull datatunes models
     cmds:
       - task: install-internal
-      - task: generate-prisma
+      - task: generate-prisma-internal
       - >
         poetry
         run
@@ -233,7 +240,7 @@ tasks:
     desc: Push schema to datatunes without migrations
     cmds:
       - task: install-internal
-      - task: generate-prisma
+      - task: generate-prisma-internal
       - >
         poetry
         run
@@ -246,7 +253,7 @@ tasks:
     desc: Apply migrations to datatunes in development mode
     cmds:
       - task: install-internal
-      - task: generate-prisma
+      - task: generate-prisma-internal
       - >
         poetry
         run
@@ -259,7 +266,7 @@ tasks:
     desc: Apply migrations to datatunes in production mode
     cmds:
       - task: install-internal
-      - task: generate-prisma
+      - task: generate-prisma-internal
       - >
         poetry
         run
@@ -273,7 +280,7 @@ tasks:
     interactive: true
     cmds:
       - task: install-internal
-      - task: generate-prisma
+      - task: generate-prisma-internal
       - >
         poetry
         run
