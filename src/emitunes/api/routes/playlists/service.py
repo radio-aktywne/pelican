@@ -1,3 +1,6 @@
+from collections.abc import Generator
+from contextlib import contextmanager
+
 from emitunes.api.routes.playlists import errors as e
 from emitunes.api.routes.playlists import models as m
 from emitunes.playlists import errors as pe
@@ -11,6 +14,17 @@ class Service:
     def __init__(self, playlists: PlaylistsService) -> None:
         self._playlists = playlists
 
+    @contextmanager
+    def _handle_errors(self) -> Generator[None, None, None]:
+        try:
+            yield
+        except pe.ValidationError as ex:
+            raise e.ValidationError(ex.message) from ex
+        except pe.DatatunesError as ex:
+            raise e.DatatunesError(ex.message) from ex
+        except pe.ServiceError as ex:
+            raise e.ServiceError(ex.message) from ex
+
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List playlists."""
 
@@ -20,22 +34,16 @@ class Service:
         include = request.include
         order = request.order
 
-        try:
+        with self._handle_errors():
             response = await self._playlists.count(
                 pm.CountRequest(
                     where=where,
                 )
             )
-        except pe.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except pe.DatatunesError as error:
-            raise e.DatatunesError(error.message) from error
-        except pe.ServiceError as error:
-            raise e.ServiceError(error.message) from error
 
         count = response.count
 
-        try:
+        with self._handle_errors():
             response = await self._playlists.list(
                 pm.ListRequest(
                     limit=limit,
@@ -45,12 +53,6 @@ class Service:
                     order=order,
                 )
             )
-        except pe.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except pe.DatatunesError as error:
-            raise e.DatatunesError(error.message) from error
-        except pe.ServiceError as error:
-            raise e.ServiceError(error.message) from error
 
         playlists = response.playlists
 
@@ -70,7 +72,7 @@ class Service:
         id = request.id
         include = request.include
 
-        try:
+        with self._handle_errors():
             response = await self._playlists.get(
                 pm.GetRequest(
                     where={
@@ -79,12 +81,6 @@ class Service:
                     include=include,
                 )
             )
-        except pe.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except pe.DatatunesError as error:
-            raise e.DatatunesError(error.message) from error
-        except pe.ServiceError as error:
-            raise e.ServiceError(error.message) from error
 
         playlist = response.playlist
 
@@ -101,19 +97,13 @@ class Service:
         data = request.data
         include = request.include
 
-        try:
+        with self._handle_errors():
             response = await self._playlists.create(
                 pm.CreateRequest(
                     data=data,
                     include=include,
                 )
             )
-        except pe.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except pe.DatatunesError as error:
-            raise e.DatatunesError(error.message) from error
-        except pe.ServiceError as error:
-            raise e.ServiceError(error.message) from error
 
         playlist = response.playlist
 
@@ -128,7 +118,7 @@ class Service:
         id = request.id
         include = request.include
 
-        try:
+        with self._handle_errors():
             response = await self._playlists.update(
                 pm.UpdateRequest(
                     data=data,
@@ -138,12 +128,6 @@ class Service:
                     include=include,
                 )
             )
-        except pe.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except pe.DatatunesError as error:
-            raise e.DatatunesError(error.message) from error
-        except pe.ServiceError as error:
-            raise e.ServiceError(error.message) from error
 
         playlist = response.playlist
 
@@ -159,7 +143,7 @@ class Service:
 
         id = request.id
 
-        try:
+        with self._handle_errors():
             response = await self._playlists.delete(
                 pm.DeleteRequest(
                     where={
@@ -167,12 +151,6 @@ class Service:
                     },
                 )
             )
-        except pe.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except pe.DatatunesError as error:
-            raise e.DatatunesError(error.message) from error
-        except pe.ServiceError as error:
-            raise e.ServiceError(error.message) from error
 
         playlist = response.playlist
 
@@ -187,7 +165,7 @@ class Service:
         id = request.id
         base = request.base
 
-        try:
+        with self._handle_errors():
             response = await self._playlists.m3u(
                 pm.M3URequest(
                     where={
@@ -196,12 +174,6 @@ class Service:
                     base=base,
                 )
             )
-        except pe.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except pe.DatatunesError as error:
-            raise e.DatatunesError(error.message) from error
-        except pe.ServiceError as error:
-            raise e.ServiceError(error.message) from error
 
         m3u = response.m3u
 

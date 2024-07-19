@@ -180,8 +180,10 @@ class MediaService:
                 where={"mediaId": old.id},
             )
 
+            ids = [binding.id for binding in bindings]
+
             await transaction.binding.delete_many(
-                where={"id": {"in": [binding.id for binding in bindings]}},
+                where={"id": {"in": ids}},
             )
 
             await transaction.media.create_many(
@@ -197,7 +199,7 @@ class MediaService:
             )
 
             bindings = await transaction.binding.find_many(
-                where={"id": {"in": [binding.id for binding in bindings]}},
+                where={"id": {"in": ids}},
             )
 
         return bindings
