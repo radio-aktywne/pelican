@@ -180,3 +180,34 @@ class Service:
             raise e.PlaylistNotFoundError(id)
 
         return m.DeleteResponse()
+
+    async def m3u(self, request: m.M3URequest) -> m.M3UResponse:
+        """Get playlist in M3U format."""
+
+        id = request.id
+        base = request.base
+
+        try:
+            response = await self._playlists.m3u(
+                pm.M3URequest(
+                    where={
+                        "id": str(id),
+                    },
+                    base=base,
+                )
+            )
+        except pe.ValidationError as error:
+            raise e.ValidationError(error.message) from error
+        except pe.DatatunesError as error:
+            raise e.DatatunesError(error.message) from error
+        except pe.ServiceError as error:
+            raise e.ServiceError(error.message) from error
+
+        m3u = response.m3u
+
+        if m3u is None:
+            raise e.PlaylistNotFoundError(id)
+
+        return m.M3UResponse(
+            m3u=m3u,
+        )

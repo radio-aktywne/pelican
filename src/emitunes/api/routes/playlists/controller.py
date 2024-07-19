@@ -1,7 +1,7 @@
 from typing import Annotated, TypeVar
 
 from litestar import Controller as BaseController
-from litestar import handlers
+from litestar import Request, handlers
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
 from litestar.params import Parameter
@@ -231,3 +231,31 @@ class Controller(BaseController):
             raise NotFoundException(extra=ex.message) from ex
 
         return Response(None)
+
+    @handlers.get(
+        "/{id:uuid}/m3u",
+        summary="Get playlist in M3U format",
+        description="Get playlist in M3U format by ID.",
+        media_type="audio/mpegurl",
+    )
+    async def m3u(
+        self,
+        service: Service,
+        id: m.M3URequestId,
+        request: Request,
+    ) -> Response[m.M3UResponseM3U]:
+        try:
+            response = await service.m3u(
+                m.M3URequest(
+                    id=id,
+                    base=str(request.base_url),
+                )
+            )
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=ex.message) from ex
+        except e.PlaylistNotFoundError as ex:
+            raise NotFoundException(extra=ex.message) from ex
+
+        m3u = response.m3u
+
+        return Response(m3u)

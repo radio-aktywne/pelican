@@ -38,6 +38,12 @@ UpdateResponsePlaylist = pm.Playlist
 
 DeleteRequestId = UUID
 
+M3URequestId = UUID
+
+M3URequestBase = str
+
+M3UResponseM3U = str
+
 
 class ListResponseResults(SerializableModel):
     """Results of a list request."""
@@ -140,3 +146,18 @@ class DeleteResponse:
     """Response for deleting a playlist."""
 
     pass
+
+
+@dataclass(kw_only=True)
+class M3URequest:
+    """Request to get a playlist in M3U format."""
+
+    id: M3URequestId
+    base: M3URequestBase
+
+
+@dataclass(kw_only=True)
+class M3UResponse:
+    """Response for getting a playlist in M3U format."""
+
+    m3u: M3UResponseM3U
