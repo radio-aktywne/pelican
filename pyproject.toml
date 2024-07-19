@@ -23,6 +23,8 @@ tzdata = "*"
 prisma = "^0.12"
 # MinIO client
 minio = "^7.2"
+# Fractional indexing
+fractional-indexing = "^0.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.1"

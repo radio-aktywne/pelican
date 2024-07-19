@@ -1,5 +1,10 @@
+import builtins
+from collections.abc import Generator
+from contextlib import contextmanager
+
 from litestar.channels import ChannelsPlugin
 
+from emitunes.bindings import models as bm
 from emitunes.datatunes import errors as de
 from emitunes.datatunes.service import DatatunesService
 from emitunes.media import errors as e
@@ -29,7 +34,7 @@ class MediaService:
         data = event.model_dump_json(by_alias=True)
         self._channels.publish(data, "events")
 
-    def _emit_created_event(self, media: m.Media) -> None:
+    def _emit_media_created_event(self, media: m.Media) -> None:
         """Emit a media created event."""
 
         data = ev.MediaCreatedEventData(
@@ -40,7 +45,7 @@ class MediaService:
         )
         self._emit_event(event)
 
-    def _emit_updated_event(self, media: m.Media) -> None:
+    def _emit_media_updated_event(self, media: m.Media) -> None:
         """Emit a media updated event."""
 
         data = ev.MediaUpdatedEventData(
@@ -51,7 +56,7 @@ class MediaService:
         )
         self._emit_event(event)
 
-    def _emit_deleted_event(self, media: m.Media) -> None:
+    def _emit_media_deleted_event(self, media: m.Media) -> None:
         """Emit a media deleted event."""
 
         data = ev.MediaDeletedEventData(
@@ -62,19 +67,48 @@ class MediaService:
         )
         self._emit_event(event)
 
+    def _emit_binding_updated_event(self, binding: bm.Binding) -> None:
+        """Emit a binding updated event."""
+
+        data = ev.BindingUpdatedEventData(
+            binding=binding,
+        )
+        event = ev.BindingUpdatedEvent(
+            data=data,
+        )
+        self._emit_event(event)
+
+    def _emit_binding_deleted_event(self, binding: bm.Binding) -> None:
+        """Emit a binding deleted event."""
+
+        data = ev.BindingDeletedEventData(
+            binding=binding,
+        )
+        event = ev.BindingDeletedEvent(
+            data=data,
+        )
+        self._emit_event(event)
+
+    @contextmanager
+    def _handle_errors(self) -> Generator[None, None, None]:
+        try:
+            yield
+        except de.DataError as ex:
+            raise e.ValidationError(str(ex)) from ex
+        except de.DatatunesError as ex:
+            raise e.DatatunesError(str(ex)) from ex
+        except me.MediatunesError as ex:
+            raise e.MediatunesError(str(ex)) from ex
+
     async def count(self, request: m.CountRequest) -> m.CountResponse:
         """Count media."""
 
         where = request.where
 
-        try:
+        with self._handle_errors():
             count = await self._datatunes.media.count(
                 where=where,
             )
-        except de.DataError as ex:
-            raise e.ValidationError(str(ex)) from ex
-        except de.DatatunesError as ex:
-            raise e.DatatunesError(str(ex)) from ex
 
         return m.CountResponse(
             count=count,
@@ -89,7 +123,7 @@ class MediaService:
         include = request.include
         order = request.order
 
-        try:
+        with self._handle_errors():
             media = await self._datatunes.media.find_many(
                 take=limit,
                 skip=offset,
@@ -97,10 +131,6 @@ class MediaService:
                 include=include,
                 order=order,
             )
-        except de.DataError as ex:
-            raise e.ValidationError(str(ex)) from ex
-        except de.DatatunesError as ex:
-            raise e.DatatunesError(str(ex)) from ex
 
         return m.ListResponse(
             media=media,
@@ -112,15 +142,11 @@ class MediaService:
         where = request.where
         include = request.include
 
-        try:
+        with self._handle_errors():
             media = await self._datatunes.media.find_unique(
                 where=where,
                 include=include,
             )
-        except de.DataError as ex:
-            raise e.ValidationError(str(ex)) from ex
-        except de.DatatunesError as ex:
-            raise e.DatatunesError(str(ex)) from ex
 
         return m.GetResponse(
             media=media,
@@ -132,21 +158,66 @@ class MediaService:
         data = request.data
         include = request.include
 
-        try:
+        with self._handle_errors():
             media = await self._datatunes.media.create(
                 data=data,
                 include=include,
             )
-        except de.DataError as ex:
-            raise e.ValidationError(str(ex)) from ex
-        except de.DatatunesError as ex:
-            raise e.DatatunesError(str(ex)) from ex
 
-        self._emit_created_event(media)
+        self._emit_media_created_event(media)
 
         return m.CreateResponse(
             media=media,
         )
+
+    async def _update_handle_bindings(
+        self, transaction: DatatunesService, old: m.Media, new: m.Media
+    ) -> builtins.list[bm.Binding]:
+        bindings = []
+
+        if new.id != old.id:
+            bindings = await transaction.binding.find_many(
+                where={"mediaId": old.id},
+            )
+
+            await transaction.binding.delete_many(
+                where={"id": {"in": [binding.id for binding in bindings]}},
+            )
+
+            await transaction.media.create_many(
+                data=[
+                    {
+                        "id": binding.id,
+                        "playlistId": binding.playlistId,
+                        "mediaId": new.id,
+                        "rank": binding.rank,
+                    }
+                    for binding in bindings
+                ],
+            )
+
+            bindings = await transaction.binding.find_many(
+                where={"id": {"in": [binding.id for binding in bindings]}},
+            )
+
+        return bindings
+
+    async def _update_handle_content(self, old: m.Media, new: m.Media) -> None:
+        if new.id != old.id:
+            try:
+                await self._mediatunes.copy(
+                    mm.CopyRequest(
+                        source=old.id,
+                        destination=new.id,
+                    )
+                )
+                await self._mediatunes.delete(
+                    mm.DeleteRequest(
+                        name=old.id,
+                    )
+                )
+            except me.NotFoundError:
+                pass
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update media."""
@@ -156,55 +227,56 @@ class MediaService:
         include = request.include
 
         async with self._datatunes.tx() as transaction:
-            try:
+            with self._handle_errors():
                 old = await transaction.media.find_unique(
                     where=where,
                 )
-            except de.DataError as ex:
-                raise e.ValidationError(str(ex)) from ex
-            except de.DatatunesError as ex:
-                raise e.DatatunesError(str(ex)) from ex
 
-            if old is None:
-                return m.UpdateResponse(media=None)
+                if old is None:
+                    return m.UpdateResponse(media=None)
 
-            try:
                 new = await transaction.media.update(
                     data=data,
                     where=where,
                     include=include,
                 )
-            except de.DataError as ex:
-                raise e.ValidationError(str(ex)) from ex
-            except de.DatatunesError as ex:
-                raise e.DatatunesError(str(ex)) from ex
 
-            if new is None:
-                return m.UpdateResponse(media=None)
+                if new is None:
+                    return m.UpdateResponse(media=None)
 
-            if new.id != old.id:
-                try:
-                    await self._mediatunes.copy(
-                        mm.CopyRequest(
-                            source=old.id,
-                            destination=new.id,
-                        )
-                    )
-                    await self._mediatunes.delete(
-                        mm.DeleteRequest(
-                            name=old.id,
-                        )
-                    )
-                except me.NotFoundError:
-                    pass
-                except me.MediatunesError as ex:
-                    raise e.MediatunesError(str(ex)) from ex
+                bindings = await self._update_handle_bindings(transaction, old, new)
+                await self._update_handle_content(old, new)
 
-        self._emit_updated_event(new)
+        self._emit_media_updated_event(new)
+        for binding in bindings:
+            self._emit_binding_updated_event(binding)
 
         return m.UpdateResponse(
             media=new,
         )
+
+    async def _delete_handle_bindings(
+        self, transaction: DatatunesService, media: m.Media
+    ) -> builtins.list[bm.Binding]:
+        bindings = await transaction.binding.find_many(
+            where={"mediaId": media.id},
+        )
+
+        await transaction.binding.delete_many(
+            where={"id": {"in": [binding.id for binding in bindings]}},
+        )
+
+        return bindings
+
+    async def _delete_handle_content(self, media: m.Media) -> None:
+        try:
+            await self._mediatunes.delete(
+                mm.DeleteRequest(
+                    name=media.id,
+                )
+            )
+        except me.NotFoundError:
+            pass
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete media."""
@@ -213,33 +285,23 @@ class MediaService:
         include = request.include
 
         async with self._datatunes.tx() as transaction:
-            try:
+            with self._handle_errors():
                 media = await transaction.media.delete(
                     where=where,
                     include=include,
                 )
-            except de.DataError as ex:
-                raise e.ValidationError(str(ex)) from ex
-            except de.DatatunesError as ex:
-                raise e.DatatunesError(str(ex)) from ex
 
-            if media is None:
-                return m.DeleteResponse(
-                    media=None,
-                )
-
-            try:
-                await self._mediatunes.delete(
-                    mm.DeleteRequest(
-                        name=media.id,
+                if media is None:
+                    return m.DeleteResponse(
+                        media=None,
                     )
-                )
-            except me.NotFoundError:
-                pass
-            except me.MediatunesError as ex:
-                raise e.MediatunesError(str(ex)) from ex
 
-        self._emit_deleted_event(media)
+                deleted = await self._delete_handle_bindings(transaction, media)
+                await self._delete_handle_content(media)
+
+        self._emit_media_deleted_event(media)
+        for binding in deleted:
+            self._emit_binding_deleted_event(binding)
 
         return m.DeleteResponse(
             media=media,
@@ -252,30 +314,23 @@ class MediaService:
         include = request.include
         content = request.content
 
-        try:
+        with self._handle_errors():
             media = await self._datatunes.media.find_unique(
                 where=where,
                 include=include,
             )
-        except de.DataError as ex:
-            raise e.ValidationError(str(ex)) from ex
-        except de.DatatunesError as ex:
-            raise e.DatatunesError(str(ex)) from ex
 
-        if media is None:
-            return m.UploadResponse(
-                media=None,
-            )
+            if media is None:
+                return m.UploadResponse(
+                    media=None,
+                )
 
-        try:
             await self._mediatunes.upload(
                 mm.UploadRequest(
                     name=media.id,
                     content=content,
                 )
             )
-        except me.MediatunesError as ex:
-            raise e.MediatunesError(str(ex)) from ex
 
         return m.UploadResponse(
             media=media,
@@ -287,36 +342,30 @@ class MediaService:
         where = request.where
         include = request.include
 
-        try:
+        with self._handle_errors():
             media = await self._datatunes.media.find_unique(
                 where=where,
                 include=include,
             )
-        except de.DataError as ex:
-            raise e.ValidationError(str(ex)) from ex
-        except de.DatatunesError as ex:
-            raise e.DatatunesError(str(ex)) from ex
 
-        if media is None:
-            return m.DownloadResponse(
-                media=None,
-                content=None,
-            )
-
-        try:
-            response = await self._mediatunes.download(
-                mm.DownloadRequest(
-                    name=media.id,
+            if media is None:
+                return m.DownloadResponse(
+                    media=None,
+                    content=None,
                 )
-            )
-            content = response.content
-        except me.NotFoundError:
-            return m.DownloadResponse(
-                media=media,
-                content=None,
-            )
-        except me.MediatunesError as ex:
-            raise e.MediatunesError(str(ex)) from ex
+
+            try:
+                response = await self._mediatunes.download(
+                    mm.DownloadRequest(
+                        name=media.id,
+                    )
+                )
+                content = response.content
+            except me.NotFoundError:
+                return m.DownloadResponse(
+                    media=media,
+                    content=None,
+                )
 
         return m.DownloadResponse(
             media=media,

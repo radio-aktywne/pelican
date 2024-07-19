@@ -4,12 +4,6 @@ from emitunes.datatunes import models as dm
 from emitunes.datatunes import types as dt
 from emitunes.mediatunes import models as mm
 
-# Monkey-patching to simplify types
-dt.MediaWhereUniqueInput = (
-    dt._MediaWhereUnique_id_Input | dt._MediaWhereUnique_name_Input
-)
-dt.MediaOrderByInput = dt._Media_id_OrderByInput | dt._Media_name_OrderByInput
-
 Media = dm.Media
 
 MediaWhereInput = dt.MediaWhereInput
@@ -20,9 +14,9 @@ MediaWhereUniqueInput = dt.MediaWhereUniqueInput
 
 MediaOrderByInput = dt.MediaOrderByInput
 
-MediaCreateInput = dt.MediaCreateInput
+MediaCreateInput = dt.MediaCreateWithoutRelationsInput
 
-MediaUpdateInput = dt.MediaUpdateInput
+MediaUpdateInput = dt.MediaUpdateManyMutationInput
 
 UploadContent = mm.UploadContent
 
