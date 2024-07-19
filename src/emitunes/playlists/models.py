@@ -109,3 +109,18 @@ class DeleteResponse:
     """Response for deleting a playlist."""
 
     playlist: Playlist | None
+
+
+@dataclass(kw_only=True)
+class M3URequest:
+    """Request to get the playlist in M3U format."""
+
+    where: PlaylistWhereUniqueInput
+    base: str
+
+
+@dataclass(kw_only=True)
+class M3UResponse:
+    """Response for getting the playlist in M3U format."""
+
+    m3u: str | None

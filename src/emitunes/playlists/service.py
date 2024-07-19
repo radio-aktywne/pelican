@@ -273,3 +273,32 @@ class PlaylistsService:
         return m.DeleteResponse(
             playlist=playlist,
         )
+
+    async def m3u(self, request: m.M3URequest) -> m.M3UResponse:
+        """Get playlist in M3U format."""
+
+        where = request.where
+        base = request.base
+
+        with self._handle_errors():
+            playlist = await self._datatunes.playlist.find_unique(
+                where=where,
+                include={"bindings": {"order_by": {"rank": "asc"}}},
+            )
+
+        if playlist is None:
+            return m.M3UResponse(
+                m3u=None,
+            )
+
+        base = base.rstrip("/")
+
+        urls = [
+            f"{base}/media/{binding.mediaId}/content" for binding in playlist.bindings
+        ]
+
+        m3u = "\n".join(urls + [""])
+
+        return m.M3UResponse(
+            m3u=m3u,
+        )
