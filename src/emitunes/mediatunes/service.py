@@ -1,5 +1,6 @@
 import asyncio
 from collections.abc import Generator
+from contextlib import contextmanager
 from enum import StrEnum
 
 from minio import Minio
@@ -44,6 +45,21 @@ class MediatunesService:
             type=object.content_type,
         )
 
+    @contextmanager
+    def _handle_errors(self) -> Generator[None, None, None]:
+        try:
+            yield
+        except MinioException as ex:
+            raise e.MediatunesError(str(ex)) from ex
+
+    @contextmanager
+    def _handle_not_found(self, name: str) -> Generator[None, None, None]:
+        try:
+            yield
+        except S3Error as ex:
+            if ex.code == ErrorCodes.NOT_FOUND:
+                raise e.NotFoundError(name) from ex
+
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List objects."""
 
@@ -51,15 +67,13 @@ class MediatunesService:
         prefix = request.prefix
         recursive = request.recursive
 
-        try:
+        with self._handle_errors():
             objects = await asyncio.to_thread(
                 self._client.list_objects,
                 bucket_name=bucket,
                 prefix=prefix,
                 recursive=recursive,
             )
-        except MinioException as ex:
-            raise e.MediatunesError(str(ex)) from ex
 
         objects = (self._map_object(object) for object in objects)
         objects = asyncify.iterator(objects)
@@ -77,7 +91,7 @@ class MediatunesService:
         type = request.content.type
         chunk = request.chunk
 
-        try:
+        with self._handle_errors():
             await asyncio.to_thread(
                 self._client.put_object,
                 bucket_name=bucket,
@@ -87,8 +101,6 @@ class MediatunesService:
                 content_type=type,
                 part_size=chunk,
             )
-        except MinioException as ex:
-            raise e.MediatunesError(str(ex)) from ex
 
         response = await self.get(
             m.GetRequest(
@@ -108,19 +120,13 @@ class MediatunesService:
         bucket = self._bucket
         name = request.name
 
-        try:
-            object = await asyncio.to_thread(
-                self._client.stat_object,
-                bucket_name=bucket,
-                object_name=name,
-            )
-        except S3Error as ex:
-            if ex.code == ErrorCodes.NOT_FOUND:
-                raise e.NotFoundError(name) from ex
-
-            raise e.MediatunesError(str(ex)) from ex
-        except MinioException as ex:
-            raise e.MediatunesError(str(ex)) from ex
+        with self._handle_errors():
+            with self._handle_not_found(name):
+                object = await asyncio.to_thread(
+                    self._client.stat_object,
+                    bucket_name=bucket,
+                    object_name=name,
+                )
 
         object = self._map_object(object)
 
@@ -134,19 +140,13 @@ class MediatunesService:
         bucket = self._bucket
         name = request.name
 
-        try:
-            response = await asyncio.to_thread(
-                self._client.get_object,
-                bucket_name=bucket,
-                object_name=name,
-            )
-        except S3Error as ex:
-            if ex.code == ErrorCodes.NOT_FOUND:
-                raise e.NotFoundError(name) from ex
-
-            raise e.MediatunesError(str(ex)) from ex
-        except MinioException as ex:
-            raise e.MediatunesError(str(ex)) from ex
+        with self._handle_errors():
+            with self._handle_not_found(name):
+                response = await asyncio.to_thread(
+                    self._client.get_object,
+                    bucket_name=bucket,
+                    object_name=name,
+                )
 
         def _data(
             response: BaseHTTPResponse, chunk: int
@@ -183,20 +183,14 @@ class MediatunesService:
         source = request.source
         destination = request.destination
 
-        try:
-            await asyncio.to_thread(
-                self._client.copy_object,
-                bucket_name=bucket,
-                object_name=destination,
-                source=CopySource(bucket_name=bucket, object_name=source),
-            )
-        except S3Error as ex:
-            if ex.code == ErrorCodes.NOT_FOUND:
-                raise e.NotFoundError(source) from ex
-
-            raise e.MediatunesError(str(ex)) from ex
-        except MinioException as ex:
-            raise e.MediatunesError(str(ex)) from ex
+        with self._handle_errors():
+            with self._handle_not_found(source):
+                await asyncio.to_thread(
+                    self._client.copy_object,
+                    bucket_name=bucket,
+                    object_name=destination,
+                    source=CopySource(bucket_name=bucket, object_name=source),
+                )
 
         response = await self.get(
             m.GetRequest(
@@ -227,19 +221,13 @@ class MediatunesService:
         if object is None:
             raise e.NotFoundError(name)
 
-        try:
-            await asyncio.to_thread(
-                self._client.remove_object,
-                bucket_name=bucket,
-                object_name=name,
-            )
-        except S3Error as ex:
-            if ex.code == ErrorCodes.NOT_FOUND:
-                raise e.NotFoundError(name) from ex
-
-            raise e.MediatunesError(str(ex)) from ex
-        except MinioException as ex:
-            raise e.MediatunesError(str(ex)) from ex
+        with self._handle_errors():
+            with self._handle_not_found(name):
+                await asyncio.to_thread(
+                    self._client.remove_object,
+                    bucket_name=bucket,
+                    object_name=name,
+                )
 
         return m.DeleteResponse(
             object=object,

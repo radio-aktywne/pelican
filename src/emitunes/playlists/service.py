@@ -10,6 +10,7 @@ from emitunes.datatunes.service import DatatunesService
 from emitunes.models import events as ev
 from emitunes.playlists import errors as e
 from emitunes.playlists import models as m
+from emitunes.utils.m3u import M3U
 
 
 class PlaylistsService:
@@ -176,8 +177,10 @@ class PlaylistsService:
                 where={"playlistId": old.id},
             )
 
+            ids = [binding.id for binding in bindings]
+
             await transaction.binding.delete_many(
-                where={"id": {"in": [binding.id for binding in bindings]}},
+                where={"id": {"in": ids}},
             )
 
             await transaction.binding.create_many(
@@ -193,7 +196,7 @@ class PlaylistsService:
             )
 
             bindings = await transaction.binding.find_many(
-                where={"id": {"in": [binding.id for binding in bindings]}},
+                where={"id": {"in": ids}},
             )
 
         return bindings
@@ -292,12 +295,12 @@ class PlaylistsService:
             )
 
         base = base.rstrip("/")
-
         urls = [
             f"{base}/media/{binding.mediaId}/content" for binding in playlist.bindings
         ]
 
-        m3u = "\n".join(urls + [""])
+        m3u = M3U(urls)
+        m3u = str(m3u)
 
         return m.M3UResponse(
             m3u=m3u,
