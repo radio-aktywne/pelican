@@ -3,12 +3,6 @@ from dataclasses import dataclass
 from emitunes.datatunes import models as dm
 from emitunes.datatunes import types as dt
 
-# Monkey-patching to simplify types
-dt.PlaylistWhereUniqueInput = (
-    dt._PlaylistWhereUnique_id_Input | dt._PlaylistWhereUnique_name_Input
-)
-dt.PlaylistOrderByInput = dt._Playlist_id_OrderByInput | dt._Playlist_name_OrderByInput
-
 Playlist = dm.Playlist
 
 PlaylistWhereInput = dt.PlaylistWhereInput
@@ -19,9 +13,9 @@ PlaylistWhereUniqueInput = dt.PlaylistWhereUniqueInput
 
 PlaylistOrderByInput = dt.PlaylistOrderByInput
 
-PlaylistCreateInput = dt.PlaylistCreateInput
+PlaylistCreateInput = dt.PlaylistCreateWithoutRelationsInput
 
-PlaylistUpdateInput = dt.PlaylistUpdateInput
+PlaylistUpdateInput = dt.PlaylistUpdateManyMutationInput
 
 
 @dataclass(kw_only=True)

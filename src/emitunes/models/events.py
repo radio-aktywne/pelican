@@ -3,6 +3,7 @@ from typing import Annotated, Literal, TypeVar
 
 from pydantic import Field, RootModel
 
+from emitunes.bindings import models as bm
 from emitunes.media import models as mm
 from emitunes.models.base import SerializableModel
 from emitunes.playlists import models as pm
@@ -189,13 +190,97 @@ class PlaylistDeletedEvent(SerializableModel):
     )
 
 
+class BindingCreatedEventData(SerializableModel):
+    """Data of a binding created event."""
+
+    binding: bm.Binding = Field(
+        ...,
+        title="BindingCreatedEventData.Binding",
+        description="Binding that was created.",
+    )
+
+
+class BindingCreatedEvent(SerializableModel):
+    """Event that is emitted when binding is created."""
+
+    type: TypeFieldType[Literal["binding-created"]] = Field(
+        "binding-created",
+        title="BindingCreatedEvent.Type",
+    )
+    created_at: CreatedAtFieldType = Field(
+        ...,
+        title="BindingCreatedEvent.CreatedAt",
+    )
+    data: DataFieldType[BindingCreatedEventData] = Field(
+        ...,
+        title="BindingCreatedEvent.Data",
+    )
+
+
+class BindingUpdatedEventData(SerializableModel):
+    """Data of a binding updated event."""
+
+    binding: bm.Binding = Field(
+        ...,
+        title="BindingUpdatedEventData.Binding",
+        description="Binding that was updated.",
+    )
+
+
+class BindingUpdatedEvent(SerializableModel):
+    """Event that is emitted when binding is updated."""
+
+    type: TypeFieldType[Literal["binding-updated"]] = Field(
+        "binding-updated",
+        title="BindingUpdatedEvent.Type",
+    )
+    created_at: CreatedAtFieldType = Field(
+        ...,
+        title="BindingUpdatedEvent.CreatedAt",
+    )
+    data: DataFieldType[BindingUpdatedEventData] = Field(
+        ...,
+        title="BindingUpdatedEvent.Data",
+    )
+
+
+class BindingDeletedEventData(SerializableModel):
+    """Data of a binding deleted event."""
+
+    binding: bm.Binding = Field(
+        ...,
+        title="BindingDeletedEventData.Binding",
+        description="Binding that was deleted.",
+    )
+
+
+class BindingDeletedEvent(SerializableModel):
+    """Event that is emitted when binding is deleted."""
+
+    type: TypeFieldType[Literal["binding-deleted"]] = Field(
+        "binding-deleted",
+        title="BindingDeletedEvent.Type",
+    )
+    created_at: CreatedAtFieldType = Field(
+        ...,
+        title="BindingDeletedEvent.CreatedAt",
+    )
+    data: DataFieldType[BindingDeletedEventData] = Field(
+        ...,
+        title="BindingDeletedEvent.Data",
+    )
+
+
 Event = Annotated[
     MediaCreatedEvent
     | MediaUpdatedEvent
     | MediaDeletedEvent
     | PlaylistCreatedEvent
     | PlaylistUpdatedEvent
-    | PlaylistDeletedEvent,
+    | PlaylistDeletedEvent
+    | BindingCreatedEvent
+    | BindingUpdatedEvent
+    | BindingDeletedEvent,
     Field(..., discriminator="type"),
 ]
 ParsableEvent = RootModel[Event]
