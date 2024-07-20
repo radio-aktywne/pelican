@@ -19,7 +19,7 @@ class ServerConfig(BaseModel):
         description="Port to run the server on.",
     )
     trusted: str | list[str] | None = Field(
-        None,
+        "*",
         title="Trusted",
         description="Trusted IP addresses.",
     )
