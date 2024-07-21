@@ -343,3 +343,62 @@ class Controller(BaseController):
             "Last-Modified": httpstringify(modified),
         }
         return Stream(data, headers=headers)
+
+    @handlers.head(
+        "/{id:uuid}/content",
+        summary="Get media content headers",
+        description="Get media content headers by ID.",
+        response_headers=[
+            ResponseHeader(
+                name="Content-Type",
+                description="Content type.",
+                documentation_only=True,
+            ),
+            ResponseHeader(
+                name="Content-Length",
+                description="Content length.",
+                documentation_only=True,
+            ),
+            ResponseHeader(
+                name="ETag",
+                description="Entity tag.",
+                documentation_only=True,
+            ),
+            ResponseHeader(
+                name="Last-Modified",
+                description="Last modified.",
+                documentation_only=True,
+            ),
+        ],
+    )
+    async def headdownload(
+        self,
+        service: Service,
+        id: m.DownloadRequestId,
+    ) -> None:
+        try:
+            response = await service.download(
+                m.DownloadRequest(
+                    id=id,
+                )
+            )
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=ex.message) from ex
+        except e.MediaNotFoundError as ex:
+            raise NotFoundException(extra=ex.message) from ex
+        except e.ContentNotFoundError as ex:
+            raise NotFoundException(extra=ex.message) from ex
+
+        content = response.content
+        type = content.type
+        size = content.size
+        tag = content.tag
+        modified = content.modified
+
+        headers = {
+            "Content-Type": type,
+            "Content-Length": str(size),
+            "ETag": tag,
+            "Last-Modified": httpstringify(modified),
+        }
+        return Response(None, headers=headers)
