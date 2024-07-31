@@ -1,8 +1,8 @@
 import logging
 import warnings
+from collections.abc import AsyncGenerator, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from importlib import metadata
-from typing import AsyncGenerator, Callable
 
 from litestar import Litestar, Router
 from litestar.channels import ChannelsPlugin
@@ -78,7 +78,7 @@ class AppBuilder:
     @asynccontextmanager
     async def _suppress_urllib_warnings_lifespan(
         self, app: Litestar
-    ) -> AsyncGenerator[None, None]:
+    ) -> AsyncGenerator[None]:
         with warnings.catch_warnings(
             action="ignore",
             category=InsecureRequestWarning,
@@ -88,7 +88,7 @@ class AppBuilder:
     @asynccontextmanager
     async def _suppress_httpx_logging_lifespan(
         self, app: Litestar
-    ) -> AsyncGenerator[None, None]:
+    ) -> AsyncGenerator[None]:
         logger = logging.getLogger("httpx")
         disabled = logger.disabled
         logger.disabled = True
@@ -99,7 +99,7 @@ class AppBuilder:
             logger.disabled = disabled
 
     @asynccontextmanager
-    async def _datatunes_lifespan(self, app: Litestar) -> AsyncGenerator[None, None]:
+    async def _datatunes_lifespan(self, app: Litestar) -> AsyncGenerator[None]:
         state: State = app.state
 
         async with state.datatunes:

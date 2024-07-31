@@ -90,7 +90,7 @@ class MediaService:
         self._emit_event(event)
 
     @contextmanager
-    def _handle_errors(self) -> Generator[None, None, None]:
+    def _handle_errors(self) -> Generator[None]:
         try:
             yield
         except de.DataError as ex:

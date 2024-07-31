@@ -1,5 +1,5 @@
 from collections.abc import AsyncGenerator
-from typing import Annotated, TypeVar
+from typing import Annotated
 
 from litestar import Controller as BaseController
 from litestar import Request, handlers
@@ -20,8 +20,6 @@ from emitunes.api.routes.media.service import Service
 from emitunes.media.service import MediaService
 from emitunes.state import State
 from emitunes.utils.time import httpstringify
-
-T = TypeVar("T")
 
 
 class DependenciesBuilder:
@@ -51,13 +49,13 @@ class Controller(BaseController):
 
     dependencies = DependenciesBuilder().build()
 
-    def _validate_pydantic(self, t: type[T], v: str) -> T:
+    def _validate_pydantic[T](self, t: type[T], v: str) -> T:
         try:
             return TypeAdapter(t).validate_python(v)
         except PydanticValidationError as ex:
             raise BadRequestException(extra=ex.errors(include_context=False)) from ex
 
-    def _validate_json(self, t: type[T], v: str) -> T:
+    def _validate_json[T](self, t: type[T], v: str) -> T:
         try:
             return TypeAdapter(Json[t]).validate_strings(v)
         except PydanticValidationError as ex:
@@ -255,7 +253,7 @@ class Controller(BaseController):
         request: Request,
     ) -> Response[None]:
 
-        async def _stream(request: Request) -> AsyncGenerator[bytes, None]:
+        async def _stream(request: Request) -> AsyncGenerator[bytes]:
             stream = request.stream()
             while True:
                 try:
@@ -375,7 +373,7 @@ class Controller(BaseController):
         self,
         service: Service,
         id: m.DownloadRequestId,
-    ) -> None:
+    ) -> Response[None]:
         try:
             response = await service.download(
                 m.DownloadRequest(

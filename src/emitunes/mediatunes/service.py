@@ -46,14 +46,14 @@ class MediatunesService:
         )
 
     @contextmanager
-    def _handle_errors(self) -> Generator[None, None, None]:
+    def _handle_errors(self) -> Generator[None]:
         try:
             yield
         except MinioException as ex:
             raise e.MediatunesError(str(ex)) from ex
 
     @contextmanager
-    def _handle_not_found(self, name: str) -> Generator[None, None, None]:
+    def _handle_not_found(self, name: str) -> Generator[None]:
         try:
             yield
         except S3Error as ex:
@@ -148,9 +148,7 @@ class MediatunesService:
                     object_name=name,
                 )
 
-        def _data(
-            response: BaseHTTPResponse, chunk: int
-        ) -> Generator[bytes, None, None]:
+        def _data(response: BaseHTTPResponse, chunk: int) -> Generator[bytes]:
             try:
                 yield from response.stream(chunk)
             finally:
