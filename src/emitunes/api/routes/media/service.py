@@ -15,7 +15,7 @@ class Service:
         self._media = media
 
     @contextmanager
-    def _handle_errors(self) -> Generator[None, None, None]:
+    def _handle_errors(self) -> Generator[None]:
         try:
             yield
         except me.ValidationError as ex:

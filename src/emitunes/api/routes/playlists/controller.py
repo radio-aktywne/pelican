@@ -1,4 +1,4 @@
-from typing import Annotated, TypeVar
+from typing import Annotated
 
 from litestar import Controller as BaseController
 from litestar import Request, handlers
@@ -16,8 +16,6 @@ from emitunes.api.routes.playlists import models as m
 from emitunes.api.routes.playlists.service import Service
 from emitunes.playlists.service import PlaylistsService
 from emitunes.state import State
-
-T = TypeVar("T")
 
 
 class DependenciesBuilder:
@@ -46,13 +44,13 @@ class Controller(BaseController):
 
     dependencies = DependenciesBuilder().build()
 
-    def _validate_pydantic(self, t: type[T], v: str) -> T:
+    def _validate_pydantic[T](self, t: type[T], v: str) -> T:
         try:
             return TypeAdapter(t).validate_python(v)
         except PydanticValidationError as ex:
             raise BadRequestException(extra=ex.errors(include_context=False)) from ex
 
-    def _validate_json(self, t: type[T], v: str) -> T:
+    def _validate_json[T](self, t: type[T], v: str) -> T:
         try:
             return TypeAdapter(Json[t]).validate_strings(v)
         except PydanticValidationError as ex:
@@ -285,7 +283,7 @@ class Controller(BaseController):
         service: Service,
         id: m.M3URequestId,
         request: Request,
-    ) -> None:
+    ) -> Response[None]:
         try:
             await service.m3u(
                 m.M3URequest(

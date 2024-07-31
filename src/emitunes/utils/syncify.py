@@ -1,18 +1,13 @@
 import asyncio
 from collections.abc import AsyncIterator, Generator, Iterator
-from typing import TypeVar
-
-T = TypeVar("T")
 
 
-def iterator(
-    it: AsyncIterator[T], loop: asyncio.AbstractEventLoop | None = None
-) -> Iterator[T]:
+def iterator[
+    T
+](it: AsyncIterator[T], loop: asyncio.AbstractEventLoop | None = None) -> Iterator[T]:
     """Convert an async iterator to an iterator."""
 
-    def _iterate(
-        it: AsyncIterator[T], loop: asyncio.AbstractEventLoop
-    ) -> Generator[T, None, None]:
+    def _iterate(it: AsyncIterator[T], loop: asyncio.AbstractEventLoop) -> Generator[T]:
         sentinel = object()
 
         while True:

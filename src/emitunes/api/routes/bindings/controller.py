@@ -1,4 +1,4 @@
-from typing import Annotated, TypeVar
+from typing import Annotated
 
 from litestar import Controller as BaseController
 from litestar import handlers
@@ -15,8 +15,6 @@ from emitunes.api.routes.bindings import models as m
 from emitunes.api.routes.bindings.service import Service
 from emitunes.bindings.service import BindingsService
 from emitunes.state import State
-
-T = TypeVar("T")
 
 
 class DependenciesBuilder:
@@ -45,13 +43,13 @@ class Controller(BaseController):
 
     dependencies = DependenciesBuilder().build()
 
-    def _validate_pydantic(self, t: type[T], v: str) -> T:
+    def _validate_pydantic[T](self, t: type[T], v: str) -> T:
         try:
             return TypeAdapter(t).validate_python(v)
         except PydanticValidationError as ex:
             raise BadRequestException(extra=ex.errors(include_context=False)) from ex
 
-    def _validate_json(self, t: type[T], v: str) -> T:
+    def _validate_json[T](self, t: type[T], v: str) -> T:
         try:
             return TypeAdapter(Json[t]).validate_strings(v)
         except PydanticValidationError as ex:

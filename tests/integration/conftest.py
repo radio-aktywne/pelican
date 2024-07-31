@@ -31,7 +31,7 @@ def app(config: Config) -> Litestar:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def datatunes() -> AsyncGenerator[AsyncDockerContainer, None]:
+async def datatunes() -> AsyncGenerator[AsyncDockerContainer]:
     """Datatunes container."""
 
     async def _check() -> None:
@@ -57,7 +57,7 @@ async def datatunes() -> AsyncGenerator[AsyncDockerContainer, None]:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def mediatunes() -> AsyncGenerator[AsyncDockerContainer, None]:
+async def mediatunes() -> AsyncGenerator[AsyncDockerContainer]:
     """Mediatunes container."""
 
     async def _check() -> None:
@@ -83,7 +83,7 @@ async def mediatunes() -> AsyncGenerator[AsyncDockerContainer, None]:
 @pytest_asyncio.fixture(scope="session")
 async def client(
     app: Litestar, datatunes: AsyncDockerContainer, mediatunes: AsyncDockerContainer
-) -> AsyncGenerator[AsyncTestClient, None]:
+) -> AsyncGenerator[AsyncTestClient]:
     """Reusable test client."""
 
     async with AsyncTestClient(app=app) as client:
