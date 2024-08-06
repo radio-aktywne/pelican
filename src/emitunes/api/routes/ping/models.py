@@ -1,15 +1,29 @@
-from dataclasses import dataclass
+from emitunes.models.base import datamodel
 
 
-@dataclass(kw_only=True)
+@datamodel
 class PingRequest:
     """Request to ping."""
 
     pass
 
 
-@dataclass(kw_only=True)
+@datamodel
 class PingResponse:
     """Response for ping."""
+
+    pass
+
+
+@datamodel
+class HeadPingRequest:
+    """Request to ping headers."""
+
+    pass
+
+
+@datamodel
+class HeadPingResponse:
+    """Response for ping headers."""
 
     pass

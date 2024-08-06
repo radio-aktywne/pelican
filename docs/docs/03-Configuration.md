@@ -1,5 +1,5 @@
 ---
-slug: /configuration
+slug: /config
 title: Configuration
 ---
 
@@ -13,7 +13,7 @@ You can configure the app at runtime using various environment variables:
 - `EMITUNES__SERVER__PORT` -
   port to run the server on
   (default: `42000`)
-- `EMITUNES__SERVER__TRUSTED`
+- `EMITUNES__SERVER__TRUSTED` -
   trusted IP addresses
   (default: `*`)
 - `EMITUNES__DATATUNES__SQL__HOST` -
@@ -40,3 +40,6 @@ You can configure the app at runtime using various environment variables:
 - `EMITUNES__MEDIATUNES__S3__PASSWORD` -
   password to authenticate with the S3 API of the mediatunes database
   (default: `password`)
+- `EMITUNES__DEBUG` -
+  enable debug mode
+  (default: `false`)

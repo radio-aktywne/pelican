@@ -3,9 +3,9 @@ from contextlib import contextmanager
 
 from emitunes.api.routes.playlists import errors as e
 from emitunes.api.routes.playlists import models as m
-from emitunes.playlists import errors as pe
-from emitunes.playlists import models as pm
-from emitunes.playlists.service import PlaylistsService
+from emitunes.services.playlists import errors as pe
+from emitunes.services.playlists import models as pm
+from emitunes.services.playlists.service import PlaylistsService
 
 
 class Service:
@@ -19,11 +19,11 @@ class Service:
         try:
             yield
         except pe.ValidationError as ex:
-            raise e.ValidationError(ex.message) from ex
+            raise e.ValidationError(str(ex)) from ex
         except pe.DatatunesError as ex:
-            raise e.DatatunesError(ex.message) from ex
+            raise e.DatatunesError(str(ex)) from ex
         except pe.ServiceError as ex:
-            raise e.ServiceError(ex.message) from ex
+            raise e.ServiceError(str(ex)) from ex
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List playlists."""
@@ -34,29 +34,30 @@ class Service:
         include = request.include
         order = request.order
 
-        with self._handle_errors():
-            response = await self._playlists.count(
-                pm.CountRequest(
-                    where=where,
-                )
-            )
-
-        count = response.count
+        req = pm.CountRequest(
+            where=where,
+        )
 
         with self._handle_errors():
-            response = await self._playlists.list(
-                pm.ListRequest(
-                    limit=limit,
-                    offset=offset,
-                    where=where,
-                    include=include,
-                    order=order,
-                )
-            )
+            res = await self._playlists.count(req)
 
-        playlists = response.playlists
+        count = res.count
 
-        results = m.ListResponseResults(
+        req = pm.ListRequest(
+            limit=limit,
+            offset=offset,
+            where=where,
+            include=include,
+            order=order,
+        )
+
+        with self._handle_errors():
+            res = await self._playlists.list(req)
+
+        playlists = res.playlists
+
+        playlists = [m.Playlist.map(p) for p in playlists]
+        results = m.PlaylistList(
             count=count,
             limit=limit,
             offset=offset,
@@ -72,21 +73,22 @@ class Service:
         id = request.id
         include = request.include
 
-        with self._handle_errors():
-            response = await self._playlists.get(
-                pm.GetRequest(
-                    where={
-                        "id": str(id),
-                    },
-                    include=include,
-                )
-            )
+        req = pm.GetRequest(
+            where={
+                "id": str(id),
+            },
+            include=include,
+        )
 
-        playlist = response.playlist
+        with self._handle_errors():
+            res = await self._playlists.get(req)
+
+        playlist = res.playlist
 
         if playlist is None:
             raise e.PlaylistNotFoundError(id)
 
+        playlist = m.Playlist.map(playlist)
         return m.GetResponse(
             playlist=playlist,
         )
@@ -97,16 +99,17 @@ class Service:
         data = request.data
         include = request.include
 
+        req = pm.CreateRequest(
+            data=data,
+            include=include,
+        )
+
         with self._handle_errors():
-            response = await self._playlists.create(
-                pm.CreateRequest(
-                    data=data,
-                    include=include,
-                )
-            )
+            res = await self._playlists.create(req)
 
-        playlist = response.playlist
+        playlist = res.playlist
 
+        playlist = m.Playlist.map(playlist)
         return m.CreateResponse(
             playlist=playlist,
         )
@@ -118,22 +121,23 @@ class Service:
         id = request.id
         include = request.include
 
-        with self._handle_errors():
-            response = await self._playlists.update(
-                pm.UpdateRequest(
-                    data=data,
-                    where={
-                        "id": str(id),
-                    },
-                    include=include,
-                )
-            )
+        req = pm.UpdateRequest(
+            data=data,
+            where={
+                "id": str(id),
+            },
+            include=include,
+        )
 
-        playlist = response.playlist
+        with self._handle_errors():
+            res = await self._playlists.update(req)
+
+        playlist = res.playlist
 
         if playlist is None:
             raise e.PlaylistNotFoundError(id)
 
+        playlist = m.Playlist.map(playlist)
         return m.UpdateResponse(
             playlist=playlist,
         )
@@ -143,16 +147,17 @@ class Service:
 
         id = request.id
 
-        with self._handle_errors():
-            response = await self._playlists.delete(
-                pm.DeleteRequest(
-                    where={
-                        "id": str(id),
-                    },
-                )
-            )
+        req = pm.DeleteRequest(
+            where={
+                "id": str(id),
+            },
+            include=None,
+        )
 
-        playlist = response.playlist
+        with self._handle_errors():
+            res = await self._playlists.delete(req)
+
+        playlist = res.playlist
 
         if playlist is None:
             raise e.PlaylistNotFoundError(id)
@@ -165,21 +170,46 @@ class Service:
         id = request.id
         base = request.base
 
-        with self._handle_errors():
-            response = await self._playlists.m3u(
-                pm.M3URequest(
-                    where={
-                        "id": str(id),
-                    },
-                    base=base,
-                )
-            )
+        req = pm.M3URequest(
+            where={
+                "id": str(id),
+            },
+            base=base,
+        )
 
-        m3u = response.m3u
+        with self._handle_errors():
+            res = await self._playlists.m3u(req)
+
+        m3u = res.m3u
 
         if m3u is None:
             raise e.PlaylistNotFoundError(id)
 
         return m.M3UResponse(
+            m3u=m3u,
+        )
+
+    async def headm3u(self, request: m.HeadM3URequest) -> m.HeadM3UResponse:
+        """Get headers for playlist in M3U format."""
+
+        id = request.id
+        base = request.base
+
+        req = pm.M3URequest(
+            where={
+                "id": str(id),
+            },
+            base=base,
+        )
+
+        with self._handle_errors():
+            res = await self._playlists.m3u(req)
+
+        m3u = res.m3u
+
+        if m3u is None:
+            raise e.PlaylistNotFoundError(id)
+
+        return m.HeadM3UResponse(
             m3u=m3u,
         )

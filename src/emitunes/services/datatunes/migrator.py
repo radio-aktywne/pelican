@@ -11,18 +11,12 @@ class DatatunesMigrator:
         self._config = config
 
     def _get_command(self) -> list[str]:
-        """Get the command to run."""
-
         return ["prisma", "migrate", "deploy"]
 
     def _get_connection_string(self) -> str:
-        """Get the connection string."""
-
         return self._config.datatunes.sql.url
 
     def _get_env(self) -> dict[str, str]:
-        """Get the environment variables."""
-
         env = os.environ.copy()
 
         return env | {
@@ -39,6 +33,6 @@ class DatatunesMigrator:
                 capture_output=True,
                 check=True,
             )
-        except subprocess.CalledProcessError as e:
-            message = e.stderr.decode() if e.stderr else "Unknown error."
-            raise RuntimeError(message) from e
+        except subprocess.CalledProcessError as ex:
+            message = ex.stderr.decode() if ex.stderr else "Unknown error."
+            raise RuntimeError(message) from ex

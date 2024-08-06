@@ -221,6 +221,11 @@ tasks:
         poetry
         run
         --
+        dotenv
+        --file
+        .env.python
+        run
+        --
         pytest
         {{ .CLI_ARGS }}
   pull-datatunes:
@@ -283,6 +288,11 @@ tasks:
       - task: generate-prisma-internal
       - >
         poetry
+        run
+        --
+        dotenv
+        --file
+        .env.python
         run
         --
         emitunes

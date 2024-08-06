@@ -10,8 +10,8 @@ from minio.error import MinioException, S3Error
 from urllib3 import BaseHTTPResponse
 
 from emitunes.config.models import MediatunesConfig
-from emitunes.mediatunes import errors as e
-from emitunes.mediatunes import models as m
+from emitunes.services.mediatunes import errors as e
+from emitunes.services.mediatunes import models as m
 from emitunes.utils import asyncify, syncify
 from emitunes.utils.read import ReadableIterator
 from emitunes.utils.time import httpparse
@@ -50,7 +50,7 @@ class MediatunesService:
         try:
             yield
         except MinioException as ex:
-            raise e.MediatunesError(str(ex)) from ex
+            raise e.ServiceError(str(ex)) from ex
 
     @contextmanager
     def _handle_not_found(self, name: str) -> Generator[None]:
@@ -77,6 +77,7 @@ class MediatunesService:
 
         objects = (self._map_object(object) for object in objects)
         objects = asyncify.iterator(objects)
+
         return m.ListResponse(
             objects=objects,
         )
@@ -102,13 +103,13 @@ class MediatunesService:
                 part_size=chunk,
             )
 
-        response = await self.get(
-            m.GetRequest(
-                name=name,
-            )
+        req = m.GetRequest(
+            name=name,
         )
 
-        object = response.object
+        res = await self.get(req)
+
+        object = res.object
 
         return m.UploadResponse(
             object=object,
@@ -142,26 +143,26 @@ class MediatunesService:
 
         with self._handle_errors():
             with self._handle_not_found(name):
-                response = await asyncio.to_thread(
+                res = await asyncio.to_thread(
                     self._client.get_object,
                     bucket_name=bucket,
                     object_name=name,
                 )
 
-        def _data(response: BaseHTTPResponse, chunk: int) -> Generator[bytes]:
+        def _data(res: BaseHTTPResponse, chunk: int) -> Generator[bytes]:
             try:
-                yield from response.stream(chunk)
+                yield from res.stream(chunk)
             finally:
-                response.close()
-                response.release_conn()
+                res.close()
+                res.release_conn()
 
-        type = response.headers["Content-Type"]
-        size = int(response.headers["Content-Length"])
-        tag = response.headers["ETag"]
-        modified = httpparse(response.headers["Last-Modified"])
+        type = res.headers["Content-Type"]
+        size = int(res.headers["Content-Length"])
+        tag = res.headers["ETag"]
+        modified = httpparse(res.headers["Last-Modified"])
 
         chunk = request.chunk
-        data = asyncify.iterator(_data(response, chunk))
+        data = asyncify.iterator(_data(res, chunk))
 
         content = m.DownloadContent(
             type=type,
@@ -187,16 +188,19 @@ class MediatunesService:
                     self._client.copy_object,
                     bucket_name=bucket,
                     object_name=destination,
-                    source=CopySource(bucket_name=bucket, object_name=source),
+                    source=CopySource(
+                        bucket_name=bucket,
+                        object_name=source,
+                    ),
                 )
 
-        response = await self.get(
-            m.GetRequest(
-                name=destination,
-            )
+        req = m.GetRequest(
+            name=destination,
         )
 
-        object = response.object
+        res = await self.get(req)
+
+        object = res.object
 
         return m.CopyResponse(
             object=object,
@@ -208,13 +212,13 @@ class MediatunesService:
         bucket = self._bucket
         name = request.name
 
-        response = await self.get(
-            m.GetRequest(
-                name=name,
-            )
+        req = m.GetRequest(
+            name=name,
         )
 
-        object = response.object
+        res = await self.get(req)
+
+        object = res.object
 
         if object is None:
             raise e.NotFoundError(name)

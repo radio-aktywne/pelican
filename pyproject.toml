@@ -1,4 +1,5 @@
 [tool.poetry]
+package-mode = true
 name = "emitunes"
 version = "0.4.0"
 description = "Emission playlists 💽"
@@ -8,9 +9,7 @@ authors = ["radio-aktywne <it@radioaktywne.pl>"]
 python = "^3.12"
 # Pydantic is used to define data models
 pydantic = "^2.8"
-pydantic-settings = "^2.3"
-# OmegaConf is used to load configuration
-omegaconf = "^2.3"
+pydantic-settings = "^2.4"
 # Typer and Rich are used to build CLIs
 typer = "^0.12"
 rich = "^13.7"
@@ -19,6 +18,8 @@ litestar = "^2.10"
 uvicorn = { version = "^0.30", extras = ["standard"] }
 # For correct handling of timezones
 tzdata = "*"
+# Environment variables loader
+python-dotenv = "^1.0"
 # Database access
 prisma = "^0.13"
 # MinIO client

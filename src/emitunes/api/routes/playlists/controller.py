@@ -5,16 +5,15 @@ from litestar import Request, handlers
 from litestar.channels import ChannelsPlugin
 from litestar.datastructures import ResponseHeader
 from litestar.di import Provide
-from litestar.params import Parameter
+from litestar.params import Body, Parameter
 from litestar.response import Response
-from pydantic import Json, TypeAdapter
-from pydantic import ValidationError as PydanticValidationError
 
 from emitunes.api.exceptions import BadRequestException, NotFoundException
 from emitunes.api.routes.playlists import errors as e
 from emitunes.api.routes.playlists import models as m
 from emitunes.api.routes.playlists.service import Service
-from emitunes.playlists.service import PlaylistsService
+from emitunes.api.validator import Validator
+from emitunes.services.playlists.service import PlaylistsService
 from emitunes.state import State
 
 
@@ -44,197 +43,224 @@ class Controller(BaseController):
 
     dependencies = DependenciesBuilder().build()
 
-    def _validate_pydantic[T](self, t: type[T], v: str) -> T:
-        try:
-            return TypeAdapter(t).validate_python(v)
-        except PydanticValidationError as ex:
-            raise BadRequestException(extra=ex.errors(include_context=False)) from ex
-
-    def _validate_json[T](self, t: type[T], v: str) -> T:
-        try:
-            return TypeAdapter(Json[t]).validate_strings(v)
-        except PydanticValidationError as ex:
-            raise BadRequestException(extra=ex.errors(include_context=False)) from ex
-
     @handlers.get(
         summary="List playlists",
-        description="List playlists that match the request.",
     )
     async def list(
         self,
         service: Service,
         limit: Annotated[
             m.ListRequestLimit,
-            Parameter(description="Maximum number of playlists to return.", default=10),
+            Parameter(
+                description="Maximum number of playlists to return.",
+            ),
         ] = 10,
         offset: Annotated[
             m.ListRequestOffset,
-            Parameter(description="Number of playlists to skip."),
+            Parameter(
+                description="Number of playlists to skip.",
+            ),
         ] = None,
         where: Annotated[
             str | None,
-            Parameter(description="Filter to apply to playlists."),
+            Parameter(
+                description="Filter to apply to find playlists.",
+            ),
         ] = None,
         include: Annotated[
             str | None,
-            Parameter(description="Relations to include with playlists."),
+            Parameter(
+                description="Relations to include in the response.",
+            ),
         ] = None,
         order: Annotated[
             str | None,
-            Parameter(description="Order to apply to playlists."),
+            Parameter(
+                description="Order to apply to the results.",
+            ),
         ] = None,
     ) -> Response[m.ListResponseResults]:
-        where = self._validate_json(m.ListRequestWhere, where) if where else None
-        include = (
-            self._validate_json(m.ListRequestInclude, include) if include else None
+        """List playlists that match the request."""
+
+        where = Validator[m.ListRequestWhere]().json(where) if where else None
+        include = Validator[m.ListRequestInclude]().json(include) if include else None
+        order = Validator[m.ListRequestOrder]().json(order) if order else None
+
+        req = m.ListRequest(
+            limit=limit,
+            offset=offset,
+            where=where,
+            include=include,
+            order=order,
         )
-        order = self._validate_json(m.ListRequestOrder, order) if order else None
 
         try:
-            response = await service.list(
-                m.ListRequest(
-                    limit=limit,
-                    offset=offset,
-                    where=where,
-                    include=include,
-                    order=order,
-                )
-            )
+            res = await service.list(req)
         except e.ValidationError as ex:
-            raise BadRequestException(extra=ex.message) from ex
+            raise BadRequestException(extra=str(ex)) from ex
 
-        results = response.results
+        results = res.results
 
         return Response(results)
 
     @handlers.get(
         "/{id:uuid}",
         summary="Get playlist",
-        description="Get playlist by ID.",
     )
     async def get(
         self,
         service: Service,
-        id: m.GetRequestId,
+        id: Annotated[
+            m.GetRequestId,
+            Parameter(
+                description="Identifier of the playlist to get.",
+            ),
+        ],
         include: Annotated[
             str | None,
-            Parameter(description="Relations to include with playlist."),
+            Parameter(
+                description="Relations to include in the response.",
+            ),
         ] = None,
     ) -> Response[m.GetResponsePlaylist]:
-        include = self._validate_json(m.GetRequestInclude, include) if include else None
+        """Get a playlist by ID."""
+
+        include = Validator[m.GetRequestInclude]().json(include) if include else None
+
+        req = m.GetRequest(
+            id=id,
+            include=include,
+        )
 
         try:
-            response = await service.get(
-                m.GetRequest(
-                    id=id,
-                    include=include,
-                )
-            )
+            res = await service.get(req)
         except e.ValidationError as ex:
-            raise BadRequestException(extra=ex.message) from ex
+            raise BadRequestException(extra=str(ex)) from ex
         except e.PlaylistNotFoundError as ex:
-            raise NotFoundException(extra=ex.message) from ex
+            raise NotFoundException(extra=str(ex)) from ex
 
-        playlist = response.playlist
+        playlist = res.playlist
 
         return Response(playlist)
 
     @handlers.post(
         summary="Create playlist",
-        description="Create playlist.",
     )
     async def create(
         self,
         service: Service,
-        data: m.CreateRequestData,
+        data: Annotated[
+            m.CreateRequestData,
+            Body(
+                description="Data to create a playlist.",
+            ),
+        ],
         include: Annotated[
             str | None,
-            Parameter(description="Relations to include with playlist."),
+            Parameter(
+                description="Relations to include in the response.",
+            ),
         ] = None,
     ) -> Response[m.CreateResponsePlaylist]:
-        data = self._validate_pydantic(m.CreateRequestData, data)
-        include = (
-            self._validate_json(m.CreateRequestInclude, include) if include else None
+        """Create a new playlist."""
+
+        data = Validator[m.CreateRequestData]().object(data)
+        include = Validator[m.CreateRequestInclude]().json(include) if include else None
+
+        req = m.CreateRequest(
+            data=data,
+            include=include,
         )
 
         try:
-            response = await service.create(
-                m.CreateRequest(
-                    data=data,
-                    include=include,
-                )
-            )
+            res = await service.create(req)
         except e.ValidationError as ex:
-            raise BadRequestException(extra=ex.message) from ex
+            raise BadRequestException(extra=str(ex)) from ex
 
-        playlist = response.playlist
+        playlist = res.playlist
 
         return Response(playlist)
 
     @handlers.patch(
         "/{id:uuid}",
         summary="Update playlist",
-        description="Update playlist by ID.",
     )
     async def update(
         self,
         service: Service,
-        id: m.UpdateRequestId,
-        data: m.UpdateRequestData,
+        id: Annotated[
+            m.UpdateRequestId,
+            Parameter(
+                description="Identifier of the playlist to update.",
+            ),
+        ],
+        data: Annotated[
+            m.UpdateRequestData,
+            Body(
+                description="Data to update a playlist.",
+            ),
+        ],
         include: Annotated[
             str | None,
-            Parameter(description="Relations to include with playlist."),
+            Parameter(
+                description="Relations to include in the response.",
+            ),
         ] = None,
     ) -> Response[m.UpdateResponsePlaylist]:
-        data = self._validate_pydantic(m.UpdateRequestData, data)
-        include = (
-            self._validate_json(m.UpdateRequestInclude, include) if include else None
+        """Update a playlist by ID."""
+
+        data = Validator[m.UpdateRequestData]().object(data)
+        include = Validator[m.UpdateRequestInclude]().json(include) if include else None
+
+        req = m.UpdateRequest(
+            data=data,
+            id=id,
+            include=include,
         )
 
         try:
-            response = await service.update(
-                m.UpdateRequest(
-                    data=data,
-                    id=id,
-                    include=include,
-                )
-            )
+            res = await service.update(req)
         except e.ValidationError as ex:
-            raise BadRequestException(extra=ex.message) from ex
+            raise BadRequestException(extra=str(ex)) from ex
         except e.PlaylistNotFoundError as ex:
-            raise NotFoundException(extra=ex.message) from ex
+            raise NotFoundException(extra=str(ex)) from ex
 
-        playlist = response.playlist
+        playlist = res.playlist
 
         return Response(playlist)
 
     @handlers.delete(
         "/{id:uuid}",
         summary="Delete playlist",
-        description="Delete playlist by ID.",
     )
     async def delete(
         self,
         service: Service,
-        id: m.DeleteRequestId,
+        id: Annotated[
+            m.DeleteRequestId,
+            Parameter(
+                description="Identifier of the playlist to delete.",
+            ),
+        ],
     ) -> Response[None]:
+        """Delete a playlist by ID."""
+
+        req = m.DeleteRequest(
+            id=id,
+        )
+
         try:
-            await service.delete(
-                m.DeleteRequest(
-                    id=id,
-                )
-            )
+            await service.delete(req)
         except e.ValidationError as ex:
-            raise BadRequestException(extra=ex.message) from ex
+            raise BadRequestException(extra=str(ex)) from ex
         except e.PlaylistNotFoundError as ex:
-            raise NotFoundException(extra=ex.message) from ex
+            raise NotFoundException(extra=str(ex)) from ex
 
         return Response(None)
 
     @handlers.get(
         "/{id:uuid}/m3u",
         summary="Get playlist in M3U format",
-        description="Get playlist in M3U format by ID.",
         media_type="audio/mpegurl",
         response_headers=[
             ResponseHeader(
@@ -247,29 +273,35 @@ class Controller(BaseController):
     async def m3u(
         self,
         service: Service,
-        id: m.M3URequestId,
+        id: Annotated[
+            m.M3URequestId,
+            Parameter(
+                description="Identifier of the playlist to get.",
+            ),
+        ],
         request: Request,
     ) -> Response[m.M3UResponseM3U]:
-        try:
-            response = await service.m3u(
-                m.M3URequest(
-                    id=id,
-                    base=str(request.base_url),
-                )
-            )
-        except e.ValidationError as ex:
-            raise BadRequestException(extra=ex.message) from ex
-        except e.PlaylistNotFoundError as ex:
-            raise NotFoundException(extra=ex.message) from ex
+        """Get a playlist in M3U format."""
 
-        m3u = response.m3u
+        req = m.M3URequest(
+            id=id,
+            base=str(request.base_url),
+        )
+
+        try:
+            res = await service.m3u(req)
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=str(ex)) from ex
+        except e.PlaylistNotFoundError as ex:
+            raise NotFoundException(extra=str(ex)) from ex
+
+        m3u = res.m3u
 
         return Response(m3u)
 
     @handlers.head(
         "/{id:uuid}/m3u",
         summary="Get headers for playlist in M3U format",
-        description="Get headers for playlist in M3U format by ID.",
         response_headers=[
             ResponseHeader(
                 name="Content-Type",
@@ -281,19 +313,26 @@ class Controller(BaseController):
     async def headm3u(
         self,
         service: Service,
-        id: m.M3URequestId,
+        id: Annotated[
+            m.HeadM3URequestId,
+            Parameter(
+                description="Identifier of the playlist to get.",
+            ),
+        ],
         request: Request,
     ) -> Response[None]:
+        """Get headers for a playlist in M3U format."""
+
+        req = m.HeadM3URequest(
+            id=id,
+            base=str(request.base_url),
+        )
+
         try:
-            await service.m3u(
-                m.M3URequest(
-                    id=id,
-                    base=str(request.base_url),
-                )
-            )
+            await service.headm3u(req)
         except e.ValidationError as ex:
-            raise BadRequestException(extra=ex.message) from ex
+            raise BadRequestException(extra=str(ex)) from ex
         except e.PlaylistNotFoundError as ex:
-            raise NotFoundException(extra=ex.message) from ex
+            raise NotFoundException(extra=str(ex)) from ex
 
         return Response(None)
