@@ -43,9 +43,9 @@
         coreutils = pkgs.coreutils;
         trunk = pkgs.trunk-io;
         poetry = pkgs.poetry;
+        cacert = pkgs.cacert;
         copier = pkgs.copier;
         openssl = pkgs.openssl;
-        cacert = pkgs.cacert;
         usql = pkgs.usql;
         mc = pkgs.minio-client;
         s5cmd = pkgs.s5cmd;
@@ -81,13 +81,15 @@
               coreutils
               trunk
               poetry
+              cacert
               copier
               openssl
-              cacert
               usql
               mc
               s5cmd
             ];
+
+            EXTRAPYTHONPATH = "${python}/${python.sitePackages}";
 
             shellHook = ''
               export TMPDIR=/tmp
@@ -103,6 +105,7 @@
               task
               coreutils
               poetry
+              cacert
             ];
 
             shellHook = ''
@@ -117,12 +120,13 @@
               node
               python
               poetry
-              openssl
               cacert
+              openssl
               tini
               su-exec
             ];
 
+            EXTRAPYTHONPATH = "${python}/${python.sitePackages}";
             LD_LIBRARY_PATH = lib.makeLibraryPath [openssl];
 
             shellHook = ''
@@ -168,10 +172,11 @@
               task
               coreutils
               poetry
-              openssl
               cacert
+              openssl
             ];
 
+            EXTRAPYTHONPATH = "${python}/${python.sitePackages}";
             LD_LIBRARY_PATH = lib.makeLibraryPath [openssl];
 
             shellHook = ''

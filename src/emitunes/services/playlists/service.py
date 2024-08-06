@@ -4,12 +4,14 @@ from contextlib import contextmanager
 
 from litestar.channels import ChannelsPlugin
 
-from emitunes.bindings import models as bm
-from emitunes.datatunes import errors as de
-from emitunes.datatunes.service import DatatunesService
-from emitunes.models import events as ev
-from emitunes.playlists import errors as e
-from emitunes.playlists import models as m
+from emitunes.models.events import binding as bev
+from emitunes.models.events import playlist as pev
+from emitunes.models.events.event import Event
+from emitunes.services.bindings import models as bm
+from emitunes.services.datatunes import errors as de
+from emitunes.services.datatunes.service import DatatunesService
+from emitunes.services.playlists import errors as e
+from emitunes.services.playlists import models as m
 from emitunes.utils.m3u import M3U
 
 
@@ -24,63 +26,56 @@ class PlaylistsService:
         self._datatunes = datatunes
         self._channels = channels
 
-    def _emit_event(self, event: ev.Event) -> None:
-        """Emit an event."""
-
+    def _emit_event(self, event: Event) -> None:
         data = event.model_dump_json(by_alias=True)
         self._channels.publish(data, "events")
 
     def _emit_playlist_created_event(self, playlist: m.Playlist) -> None:
-        """Emit a playlist created event."""
-
-        data = ev.PlaylistCreatedEventData(
+        playlist = pev.Playlist.map(playlist)
+        data = pev.PlaylistCreatedEventData(
             playlist=playlist,
         )
-        event = ev.PlaylistCreatedEvent(
+        event = pev.PlaylistCreatedEvent(
             data=data,
         )
         self._emit_event(event)
 
     def _emit_playlist_updated_event(self, playlist: m.Playlist) -> None:
-        """Emit a playlist updated event."""
-
-        data = ev.PlaylistUpdatedEventData(
+        playlist = pev.Playlist.map(playlist)
+        data = pev.PlaylistUpdatedEventData(
             playlist=playlist,
         )
-        event = ev.PlaylistUpdatedEvent(
+        event = pev.PlaylistUpdatedEvent(
             data=data,
         )
         self._emit_event(event)
 
     def _emit_playlist_deleted_event(self, playlist: m.Playlist) -> None:
-        """Emit a playlist deleted event."""
-
-        data = ev.PlaylistDeletedEventData(
+        playlist = pev.Playlist.map(playlist)
+        data = pev.PlaylistDeletedEventData(
             playlist=playlist,
         )
-        event = ev.PlaylistDeletedEvent(
+        event = pev.PlaylistDeletedEvent(
             data=data,
         )
         self._emit_event(event)
 
     def _emit_binding_updated_event(self, binding: bm.Binding) -> None:
-        """Emit a binding updated event."""
-
-        data = ev.BindingUpdatedEventData(
+        binding = bev.Binding.map(binding)
+        data = bev.BindingUpdatedEventData(
             binding=binding,
         )
-        event = ev.BindingUpdatedEvent(
+        event = bev.BindingUpdatedEvent(
             data=data,
         )
         self._emit_event(event)
 
     def _emit_binding_deleted_event(self, binding: bm.Binding) -> None:
-        """Emit a binding deleted event."""
-
-        data = ev.BindingDeletedEventData(
+        binding = bev.Binding.map(binding)
+        data = bev.BindingDeletedEventData(
             binding=binding,
         )
-        event = ev.BindingDeletedEvent(
+        event = bev.BindingDeletedEvent(
             data=data,
         )
         self._emit_event(event)
@@ -91,7 +86,7 @@ class PlaylistsService:
             yield
         except de.DataError as ex:
             raise e.ValidationError(str(ex)) from ex
-        except de.DatatunesError as ex:
+        except de.ServiceError as ex:
             raise e.DatatunesError(str(ex)) from ex
 
     async def count(self, request: m.CountRequest) -> m.CountResponse:
@@ -174,13 +169,19 @@ class PlaylistsService:
 
         if new.id != old.id:
             bindings = await transaction.binding.find_many(
-                where={"playlistId": old.id},
+                where={
+                    "playlistId": old.id,
+                },
             )
 
             ids = [binding.id for binding in bindings]
 
             await transaction.binding.delete_many(
-                where={"id": {"in": ids}},
+                where={
+                    "id": {
+                        "in": ids,
+                    },
+                },
             )
 
             await transaction.binding.create_many(
@@ -196,7 +197,11 @@ class PlaylistsService:
             )
 
             bindings = await transaction.binding.find_many(
-                where={"id": {"in": ids}},
+                where={
+                    "id": {
+                        "in": ids,
+                    },
+                },
             )
 
         return bindings
@@ -215,7 +220,9 @@ class PlaylistsService:
                 )
 
                 if old is None:
-                    return m.UpdateResponse(playlist=None)
+                    return m.UpdateResponse(
+                        playlist=None,
+                    )
 
                 new = await transaction.playlist.update(
                     data=data,
@@ -224,7 +231,9 @@ class PlaylistsService:
                 )
 
                 if new is None:
-                    return m.UpdateResponse(playlist=None)
+                    return m.UpdateResponse(
+                        playlist=None,
+                    )
 
                 bindings = await self._update_handle_bindings(transaction, old, new)
 
@@ -242,11 +251,17 @@ class PlaylistsService:
         playlist: m.Playlist,
     ) -> builtins.list[bm.Binding]:
         bindings = await transaction.binding.find_many(
-            where={"playlistId": playlist.id},
+            where={
+                "playlistId": playlist.id,
+            },
         )
 
         await transaction.binding.delete_many(
-            where={"id": {"in": [binding.id for binding in bindings]}},
+            where={
+                "id": {
+                    "in": [binding.id for binding in bindings],
+                },
+            },
         )
 
         return bindings
@@ -265,7 +280,9 @@ class PlaylistsService:
                 )
 
                 if playlist is None:
-                    return m.DeleteResponse(playlist=None)
+                    return m.DeleteResponse(
+                        playlist=None,
+                    )
 
                 bindings = await self._delete_handle_bindings(transaction, playlist)
 
@@ -286,7 +303,13 @@ class PlaylistsService:
         with self._handle_errors():
             playlist = await self._datatunes.playlist.find_unique(
                 where=where,
-                include={"bindings": {"order_by": {"rank": "asc"}}},
+                include={
+                    "bindings": {
+                        "order_by": {
+                            "rank": "asc",
+                        },
+                    },
+                },
             )
 
         if playlist is None:

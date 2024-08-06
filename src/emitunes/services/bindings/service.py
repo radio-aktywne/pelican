@@ -4,11 +4,12 @@ from contextlib import contextmanager
 from fractional_indexing import FIError, validate_order_key
 from litestar.channels import ChannelsPlugin
 
-from emitunes.bindings import errors as e
-from emitunes.bindings import models as m
-from emitunes.datatunes import errors as de
-from emitunes.datatunes.service import DatatunesService
-from emitunes.models import events as ev
+from emitunes.models.events import binding as ev
+from emitunes.models.events.event import Event
+from emitunes.services.bindings import errors as e
+from emitunes.services.bindings import models as m
+from emitunes.services.datatunes import errors as de
+from emitunes.services.datatunes.service import DatatunesService
 
 
 class BindingsService:
@@ -22,15 +23,12 @@ class BindingsService:
         self._datatunes = datatunes
         self._channels = channels
 
-    def _emit_event(self, event: ev.Event) -> None:
-        """Emit an event."""
-
+    def _emit_event(self, event: Event) -> None:
         data = event.model_dump_json(by_alias=True)
         self._channels.publish(data, "events")
 
     def _emit_binding_created_event(self, binding: m.Binding) -> None:
-        """Emit a binding created event."""
-
+        binding = ev.Binding.map(binding)
         data = ev.BindingCreatedEventData(
             binding=binding,
         )
@@ -40,8 +38,7 @@ class BindingsService:
         self._emit_event(event)
 
     def _emit_binding_updated_event(self, binding: m.Binding) -> None:
-        """Emit a binding updated event."""
-
+        binding = ev.Binding.map(binding)
         data = ev.BindingUpdatedEventData(
             binding=binding,
         )
@@ -51,8 +48,7 @@ class BindingsService:
         self._emit_event(event)
 
     def _emit_binding_deleted_event(self, binding: m.Binding) -> None:
-        """Emit a binding deleted event."""
-
+        binding = ev.Binding.map(binding)
         data = ev.BindingDeletedEventData(
             binding=binding,
         )
@@ -67,7 +63,7 @@ class BindingsService:
             yield
         except de.DataError as ex:
             raise e.ValidationError(str(ex)) from ex
-        except de.DatatunesError as ex:
+        except de.ServiceError as ex:
             raise e.DatatunesError(str(ex)) from ex
 
     def _validate_rank(self, rank: str) -> None:
@@ -166,7 +162,9 @@ class BindingsService:
             )
 
         if binding is None:
-            return m.UpdateResponse(binding=None)
+            return m.UpdateResponse(
+                binding=None,
+            )
 
         self._emit_binding_updated_event(binding)
 
@@ -187,7 +185,9 @@ class BindingsService:
             )
 
         if binding is None:
-            return m.DeleteResponse(binding=None)
+            return m.DeleteResponse(
+                binding=None,
+            )
 
         self._emit_binding_deleted_event(binding)
 

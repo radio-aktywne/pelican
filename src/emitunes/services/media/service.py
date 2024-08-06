@@ -4,15 +4,17 @@ from contextlib import contextmanager
 
 from litestar.channels import ChannelsPlugin
 
-from emitunes.bindings import models as bm
-from emitunes.datatunes import errors as de
-from emitunes.datatunes.service import DatatunesService
-from emitunes.media import errors as e
-from emitunes.media import models as m
-from emitunes.mediatunes import errors as me
-from emitunes.mediatunes import models as mm
-from emitunes.mediatunes.service import MediatunesService
-from emitunes.models import events as ev
+from emitunes.models.events import binding as bev
+from emitunes.models.events import media as mev
+from emitunes.models.events.event import Event
+from emitunes.services.bindings import models as bm
+from emitunes.services.datatunes import errors as de
+from emitunes.services.datatunes.service import DatatunesService
+from emitunes.services.media import errors as e
+from emitunes.services.media import models as m
+from emitunes.services.mediatunes import errors as me
+from emitunes.services.mediatunes import models as mm
+from emitunes.services.mediatunes.service import MediatunesService
 
 
 class MediaService:
@@ -28,63 +30,56 @@ class MediaService:
         self._mediatunes = mediatunes
         self._channels = channels
 
-    def _emit_event(self, event: ev.Event) -> None:
-        """Emit an event."""
-
+    def _emit_event(self, event: Event) -> None:
         data = event.model_dump_json(by_alias=True)
         self._channels.publish(data, "events")
 
     def _emit_media_created_event(self, media: m.Media) -> None:
-        """Emit a media created event."""
-
-        data = ev.MediaCreatedEventData(
+        media = mev.Media.map(media)
+        data = mev.MediaCreatedEventData(
             media=media,
         )
-        event = ev.MediaCreatedEvent(
+        event = mev.MediaCreatedEvent(
             data=data,
         )
         self._emit_event(event)
 
     def _emit_media_updated_event(self, media: m.Media) -> None:
-        """Emit a media updated event."""
-
-        data = ev.MediaUpdatedEventData(
+        media = mev.Media.map(media)
+        data = mev.MediaUpdatedEventData(
             media=media,
         )
-        event = ev.MediaUpdatedEvent(
+        event = mev.MediaUpdatedEvent(
             data=data,
         )
         self._emit_event(event)
 
     def _emit_media_deleted_event(self, media: m.Media) -> None:
-        """Emit a media deleted event."""
-
-        data = ev.MediaDeletedEventData(
+        media = mev.Media.map(media)
+        data = mev.MediaDeletedEventData(
             media=media,
         )
-        event = ev.MediaDeletedEvent(
+        event = mev.MediaDeletedEvent(
             data=data,
         )
         self._emit_event(event)
 
     def _emit_binding_updated_event(self, binding: bm.Binding) -> None:
-        """Emit a binding updated event."""
-
-        data = ev.BindingUpdatedEventData(
+        binding = bev.Binding.map(binding)
+        data = bev.BindingUpdatedEventData(
             binding=binding,
         )
-        event = ev.BindingUpdatedEvent(
+        event = bev.BindingUpdatedEvent(
             data=data,
         )
         self._emit_event(event)
 
     def _emit_binding_deleted_event(self, binding: bm.Binding) -> None:
-        """Emit a binding deleted event."""
-
-        data = ev.BindingDeletedEventData(
+        binding = bev.Binding.map(binding)
+        data = bev.BindingDeletedEventData(
             binding=binding,
         )
-        event = ev.BindingDeletedEvent(
+        event = bev.BindingDeletedEvent(
             data=data,
         )
         self._emit_event(event)
@@ -95,9 +90,9 @@ class MediaService:
             yield
         except de.DataError as ex:
             raise e.ValidationError(str(ex)) from ex
-        except de.DatatunesError as ex:
+        except de.ServiceError as ex:
             raise e.DatatunesError(str(ex)) from ex
-        except me.MediatunesError as ex:
+        except me.ServiceError as ex:
             raise e.MediatunesError(str(ex)) from ex
 
     async def count(self, request: m.CountRequest) -> m.CountResponse:
@@ -177,13 +172,19 @@ class MediaService:
 
         if new.id != old.id:
             bindings = await transaction.binding.find_many(
-                where={"mediaId": old.id},
+                where={
+                    "mediaId": old.id,
+                },
             )
 
             ids = [binding.id for binding in bindings]
 
             await transaction.binding.delete_many(
-                where={"id": {"in": ids}},
+                where={
+                    "id": {
+                        "in": ids,
+                    },
+                },
             )
 
             await transaction.media.create_many(
@@ -199,7 +200,11 @@ class MediaService:
             )
 
             bindings = await transaction.binding.find_many(
-                where={"id": {"in": ids}},
+                where={
+                    "id": {
+                        "in": ids,
+                    },
+                },
             )
 
         return bindings
@@ -207,17 +212,18 @@ class MediaService:
     async def _update_handle_content(self, old: m.Media, new: m.Media) -> None:
         if new.id != old.id:
             try:
-                await self._mediatunes.copy(
-                    mm.CopyRequest(
-                        source=old.id,
-                        destination=new.id,
-                    )
+                req = mm.CopyRequest(
+                    source=old.id,
+                    destination=new.id,
                 )
-                await self._mediatunes.delete(
-                    mm.DeleteRequest(
-                        name=old.id,
-                    )
+
+                await self._mediatunes.copy(req)
+
+                req = mm.DeleteRequest(
+                    name=old.id,
                 )
+
+                await self._mediatunes.delete(req)
             except me.NotFoundError:
                 pass
 
@@ -235,7 +241,9 @@ class MediaService:
                 )
 
                 if old is None:
-                    return m.UpdateResponse(media=None)
+                    return m.UpdateResponse(
+                        media=None,
+                    )
 
                 new = await transaction.media.update(
                     data=data,
@@ -244,7 +252,9 @@ class MediaService:
                 )
 
                 if new is None:
-                    return m.UpdateResponse(media=None)
+                    return m.UpdateResponse(
+                        media=None,
+                    )
 
                 bindings = await self._update_handle_bindings(transaction, old, new)
                 await self._update_handle_content(old, new)
@@ -261,22 +271,28 @@ class MediaService:
         self, transaction: DatatunesService, media: m.Media
     ) -> builtins.list[bm.Binding]:
         bindings = await transaction.binding.find_many(
-            where={"mediaId": media.id},
+            where={
+                "mediaId": media.id,
+            },
         )
 
         await transaction.binding.delete_many(
-            where={"id": {"in": [binding.id for binding in bindings]}},
+            where={
+                "id": {
+                    "in": [binding.id for binding in bindings],
+                },
+            },
         )
 
         return bindings
 
     async def _delete_handle_content(self, media: m.Media) -> None:
         try:
-            await self._mediatunes.delete(
-                mm.DeleteRequest(
-                    name=media.id,
-                )
+            req = mm.DeleteRequest(
+                name=media.id,
             )
+
+            await self._mediatunes.delete(req)
         except me.NotFoundError:
             pass
 
@@ -327,12 +343,12 @@ class MediaService:
                     media=None,
                 )
 
-            await self._mediatunes.upload(
-                mm.UploadRequest(
-                    name=media.id,
-                    content=content,
-                )
+            req = mm.UploadRequest(
+                name=media.id,
+                content=content,
             )
+
+            await self._mediatunes.upload(req)
 
         return m.UploadResponse(
             media=media,
@@ -357,12 +373,13 @@ class MediaService:
                 )
 
             try:
-                response = await self._mediatunes.download(
-                    mm.DownloadRequest(
-                        name=media.id,
-                    )
+                req = mm.DownloadRequest(
+                    name=media.id,
                 )
-                content = response.content
+
+                res = await self._mediatunes.download(req)
+
+                content = res.content
             except me.NotFoundError:
                 return m.DownloadResponse(
                     media=media,

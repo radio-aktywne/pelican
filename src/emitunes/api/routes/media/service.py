@@ -3,9 +3,9 @@ from contextlib import contextmanager
 
 from emitunes.api.routes.media import errors as e
 from emitunes.api.routes.media import models as m
-from emitunes.media import errors as me
-from emitunes.media import models as mm
-from emitunes.media.service import MediaService
+from emitunes.services.media import errors as me
+from emitunes.services.media import models as mm
+from emitunes.services.media.service import MediaService
 
 
 class Service:
@@ -19,13 +19,13 @@ class Service:
         try:
             yield
         except me.ValidationError as ex:
-            raise e.ValidationError(ex.message) from ex
+            raise e.ValidationError(str(ex)) from ex
         except me.DatatunesError as ex:
-            raise e.DatatunesError(ex.message) from ex
+            raise e.DatatunesError(str(ex)) from ex
         except me.MediatunesError as ex:
-            raise e.MediatunesError(ex.message) from ex
+            raise e.MediatunesError(str(ex)) from ex
         except me.ServiceError as ex:
-            raise e.ServiceError(ex.message) from ex
+            raise e.ServiceError(str(ex)) from ex
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List media."""
@@ -36,29 +36,30 @@ class Service:
         include = request.include
         order = request.order
 
-        with self._handle_errors():
-            response = await self._media.count(
-                mm.CountRequest(
-                    where=where,
-                )
-            )
-
-        count = response.count
+        req = mm.CountRequest(
+            where=where,
+        )
 
         with self._handle_errors():
-            response = await self._media.list(
-                mm.ListRequest(
-                    limit=limit,
-                    offset=offset,
-                    where=where,
-                    include=include,
-                    order=order,
-                )
-            )
+            res = await self._media.count(req)
 
-        media = response.media
+        count = res.count
 
-        results = m.ListResponseResults(
+        req = mm.ListRequest(
+            limit=limit,
+            offset=offset,
+            where=where,
+            include=include,
+            order=order,
+        )
+
+        with self._handle_errors():
+            res = await self._media.list(req)
+
+        media = res.media
+
+        media = [m.Media.map(med) for med in media]
+        results = m.MediaList(
             count=count,
             limit=limit,
             offset=offset,
@@ -74,21 +75,22 @@ class Service:
         id = request.id
         include = request.include
 
-        with self._handle_errors():
-            response = await self._media.get(
-                mm.GetRequest(
-                    where={
-                        "id": str(id),
-                    },
-                    include=include,
-                )
-            )
+        req = mm.GetRequest(
+            where={
+                "id": str(id),
+            },
+            include=include,
+        )
 
-        media = response.media
+        with self._handle_errors():
+            res = await self._media.get(req)
+
+        media = res.media
 
         if media is None:
             raise e.MediaNotFoundError(id)
 
+        media = m.Media.map(media)
         return m.GetResponse(
             media=media,
         )
@@ -99,16 +101,17 @@ class Service:
         data = request.data
         include = request.include
 
+        req = mm.CreateRequest(
+            data=data,
+            include=include,
+        )
+
         with self._handle_errors():
-            response = await self._media.create(
-                mm.CreateRequest(
-                    data=data,
-                    include=include,
-                )
-            )
+            res = await self._media.create(req)
 
-        media = response.media
+        media = res.media
 
+        media = m.Media.map(media)
         return m.CreateResponse(
             media=media,
         )
@@ -120,22 +123,23 @@ class Service:
         id = request.id
         include = request.include
 
-        with self._handle_errors():
-            response = await self._media.update(
-                mm.UpdateRequest(
-                    data=data,
-                    where={
-                        "id": str(id),
-                    },
-                    include=include,
-                )
-            )
+        req = mm.UpdateRequest(
+            data=data,
+            where={
+                "id": str(id),
+            },
+            include=include,
+        )
 
-        media = response.media
+        with self._handle_errors():
+            res = await self._media.update(req)
+
+        media = res.media
 
         if media is None:
             raise e.MediaNotFoundError(id)
 
+        media = m.Media.map(media)
         return m.UpdateResponse(
             media=media,
         )
@@ -145,16 +149,17 @@ class Service:
 
         id = request.id
 
-        with self._handle_errors():
-            response = await self._media.delete(
-                mm.DeleteRequest(
-                    where={
-                        "id": str(id),
-                    },
-                )
-            )
+        req = mm.DeleteRequest(
+            where={
+                "id": str(id),
+            },
+            include=None,
+        )
 
-        media = response.media
+        with self._handle_errors():
+            res = await self._media.delete(req)
+
+        media = res.media
 
         if media is None:
             raise e.MediaNotFoundError(id)
@@ -167,17 +172,18 @@ class Service:
         id = request.id
         content = request.content
 
-        with self._handle_errors():
-            response = await self._media.upload(
-                mm.UploadRequest(
-                    where={
-                        "id": str(id),
-                    },
-                    content=content,
-                )
-            )
+        req = mm.UploadRequest(
+            where={
+                "id": str(id),
+            },
+            include=None,
+            content=content,
+        )
 
-        media = response.media
+        with self._handle_errors():
+            res = await self._media.upload(req)
+
+        media = res.media
 
         if media is None:
             raise e.MediaNotFoundError(id)
@@ -189,25 +195,59 @@ class Service:
 
         id = request.id
 
-        with self._handle_errors():
-            response = await self._media.download(
-                mm.DownloadRequest(
-                    where={
-                        "id": str(id),
-                    },
-                )
-            )
+        req = mm.DownloadRequest(
+            where={
+                "id": str(id),
+            },
+            include=None,
+        )
 
-        media = response.media
+        with self._handle_errors():
+            res = await self._media.download(req)
+
+        media = res.media
 
         if media is None:
             raise e.MediaNotFoundError(id)
 
-        content = response.content
+        content = res.content
 
         if content is None:
             raise e.ContentNotFoundError(id)
 
+        content = m.DownloadContent.map(content)
         return m.DownloadResponse(
+            content=content,
+        )
+
+    async def headdownload(
+        self, request: m.HeadDownloadRequest
+    ) -> m.HeadDownloadResponse:
+        """Download media content headers."""
+
+        id = request.id
+
+        req = mm.DownloadRequest(
+            where={
+                "id": str(id),
+            },
+            include=None,
+        )
+
+        with self._handle_errors():
+            res = await self._media.download(req)
+
+        media = res.media
+
+        if media is None:
+            raise e.MediaNotFoundError(id)
+
+        content = res.content
+
+        if content is None:
+            raise e.ContentNotFoundError(id)
+
+        content = m.DownloadContent.map(content)
+        return m.HeadDownloadResponse(
             content=content,
         )
