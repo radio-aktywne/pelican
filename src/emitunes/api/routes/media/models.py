@@ -1,3 +1,5 @@
+from collections.abc import AsyncIterator
+from datetime import datetime
 from uuid import UUID
 
 from emitunes.models.base import SerializableModel, datamodel, serializable
@@ -151,19 +153,6 @@ class MediaUpdateInput(mm.MediaUpdateInput):
     pass
 
 
-@serializable
-class UploadContent(mm.UploadContent):
-    def map(self) -> mm.UploadContent:
-        return mm.UploadContent(**vars(self))
-
-
-@serializable
-class DownloadContent(mm.DownloadContent):
-    @staticmethod
-    def map(content: mm.DownloadContent) -> "DownloadContent":
-        return DownloadContent(**vars(content))
-
-
 ListRequestLimit = int | None
 
 ListRequestOffset = int | None
@@ -200,15 +189,31 @@ DeleteRequestId = UUID
 
 UploadRequestId = UUID
 
-UploadRequestContent = UploadContent
+UploadRequestType = str
+
+UploadRequestData = AsyncIterator[bytes]
 
 DownloadRequestId = UUID
 
-DownloadResponseContent = DownloadContent
+DownloadResponseType = str
+
+DownloadResponseSize = int
+
+DownloadResponseTag = str
+
+DownloadResponseModified = datetime
+
+DownloadResponseData = AsyncIterator[bytes]
 
 HeadDownloadRequestId = UUID
 
-HeadDownloadResponseContent = DownloadContent
+HeadDownloadResponseType = str
+
+HeadDownloadResponseSize = int
+
+HeadDownloadResponseTag = str
+
+HeadDownloadResponseModified = datetime
 
 
 @datamodel
@@ -321,8 +326,11 @@ class UploadRequest:
     id: UploadRequestId
     """Identifier of the media to upload content for."""
 
-    content: UploadRequestContent
-    """Content to upload."""
+    type: UploadRequestType
+    """Type of the content."""
+
+    data: UploadRequestData
+    """Data of the content."""
 
 
 @datamodel
@@ -344,8 +352,20 @@ class DownloadRequest:
 class DownloadResponse:
     """Response for downloading media content."""
 
-    content: DownloadResponseContent
-    """Content that was downloaded."""
+    type: DownloadResponseType
+    """Type of the content."""
+
+    size: DownloadResponseSize
+    """Size of the content in bytes."""
+
+    tag: DownloadResponseTag
+    """ETag of the content."""
+
+    modified: DownloadResponseModified
+    """Date and time when the content was last modified."""
+
+    data: DownloadResponseData
+    """Data of the content."""
 
 
 @datamodel
@@ -360,5 +380,14 @@ class HeadDownloadRequest:
 class HeadDownloadResponse:
     """Response for downloading media content headers."""
 
-    content: HeadDownloadResponseContent
-    """Content that was downloaded."""
+    type: HeadDownloadResponseType
+    """Type of the content."""
+
+    size: HeadDownloadResponseSize
+    """Size of the content in bytes."""
+
+    tag: HeadDownloadResponseTag
+    """ETag of the content."""
+
+    modified: HeadDownloadResponseModified
+    """Date and time when the content was last modified."""

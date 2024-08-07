@@ -170,8 +170,13 @@ class Service:
         """Upload media content."""
 
         id = request.id
-        content = request.content
+        type = request.type
+        data = request.data
 
+        content = mm.UploadContent(
+            type=type,
+            data=data,
+        )
         req = mm.UploadRequest(
             where={
                 "id": str(id),
@@ -215,9 +220,18 @@ class Service:
         if content is None:
             raise e.ContentNotFoundError(id)
 
-        content = m.DownloadContent.map(content)
+        type = content.type
+        size = content.size
+        tag = content.tag
+        modified = content.modified
+        data = content.data
+
         return m.DownloadResponse(
-            content=content,
+            type=type,
+            size=size,
+            tag=tag,
+            modified=modified,
+            data=data,
         )
 
     async def headdownload(
@@ -247,7 +261,14 @@ class Service:
         if content is None:
             raise e.ContentNotFoundError(id)
 
-        content = m.DownloadContent.map(content)
+        type = content.type
+        size = content.size
+        tag = content.tag
+        modified = content.modified
+
         return m.HeadDownloadResponse(
-            content=content,
+            type=type,
+            size=size,
+            tag=tag,
+            modified=modified,
         )

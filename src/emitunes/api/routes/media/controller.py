@@ -278,7 +278,7 @@ class Controller(BaseController):
             ),
         ],
         type: Annotated[
-            str,
+            m.UploadRequestType,
             Parameter(
                 header="Content-Type",
                 description="Content type.",
@@ -298,13 +298,10 @@ class Controller(BaseController):
 
                 yield chunk
 
-        content = m.UploadRequestContent(
-            type=type,
-            data=_stream(request),
-        )
         req = m.UploadRequest(
             id=id,
-            content=content,
+            type=type,
+            data=_stream(request),
         )
 
         try:
@@ -369,12 +366,11 @@ class Controller(BaseController):
         except e.ContentNotFoundError as ex:
             raise NotFoundException(extra=str(ex)) from ex
 
-        content = res.content
-        type = content.type
-        size = content.size
-        tag = content.tag
-        modified = content.modified
-        data = content.data
+        type = res.type
+        size = res.size
+        tag = res.tag
+        modified = res.modified
+        data = res.data
 
         headers = {
             "Content-Type": type,
@@ -438,11 +434,10 @@ class Controller(BaseController):
         except e.ContentNotFoundError as ex:
             raise NotFoundException(extra=str(ex)) from ex
 
-        content = res.content
-        type = content.type
-        size = content.size
-        tag = content.tag
-        modified = content.modified
+        type = res.type
+        size = res.size
+        tag = res.tag
+        modified = res.modified
 
         headers = {
             "Content-Type": type,
