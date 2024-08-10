@@ -187,7 +187,7 @@ class MediaService:
                 },
             )
 
-            await transaction.media.create_many(
+            await transaction.binding.create_many(
                 data=[
                     {
                         "id": binding.id,
