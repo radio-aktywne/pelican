@@ -82,9 +82,9 @@ class Controller(BaseController):
     ) -> Response[m.ListResponseResults]:
         """List playlists that match the request."""
 
-        where = Validator[m.ListRequestWhere]().json(where) if where else None
-        include = Validator[m.ListRequestInclude]().json(include) if include else None
-        order = Validator[m.ListRequestOrder]().json(order) if order else None
+        where = Validator(m.ListRequestWhere).json(where) if where else None
+        include = Validator(m.ListRequestInclude).json(include) if include else None
+        order = Validator(m.ListRequestOrder).json(order) if order else None
 
         req = m.ListRequest(
             limit=limit,
@@ -125,7 +125,7 @@ class Controller(BaseController):
     ) -> Response[m.GetResponsePlaylist]:
         """Get a playlist by ID."""
 
-        include = Validator[m.GetRequestInclude]().json(include) if include else None
+        include = Validator(m.GetRequestInclude).json(include) if include else None
 
         req = m.GetRequest(
             id=id,
@@ -164,8 +164,8 @@ class Controller(BaseController):
     ) -> Response[m.CreateResponsePlaylist]:
         """Create a new playlist."""
 
-        data = Validator[m.CreateRequestData]().object(data)
-        include = Validator[m.CreateRequestInclude]().json(include) if include else None
+        data = Validator(m.CreateRequestData).object(data)
+        include = Validator(m.CreateRequestInclude).json(include) if include else None
 
         req = m.CreateRequest(
             data=data,
@@ -209,8 +209,8 @@ class Controller(BaseController):
     ) -> Response[m.UpdateResponsePlaylist]:
         """Update a playlist by ID."""
 
-        data = Validator[m.UpdateRequestData]().object(data)
-        include = Validator[m.UpdateRequestInclude]().json(include) if include else None
+        data = Validator(m.UpdateRequestData).object(data)
+        include = Validator(m.UpdateRequestInclude).json(include) if include else None
 
         req = m.UpdateRequest(
             data=data,

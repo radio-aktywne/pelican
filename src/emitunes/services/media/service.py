@@ -7,7 +7,6 @@ from litestar.channels import ChannelsPlugin
 from emitunes.models.events import binding as bev
 from emitunes.models.events import media as mev
 from emitunes.models.events.event import Event
-from emitunes.services.bindings import models as bm
 from emitunes.services.datatunes import errors as de
 from emitunes.services.datatunes.service import DatatunesService
 from emitunes.services.media import errors as e
@@ -64,7 +63,7 @@ class MediaService:
         )
         self._emit_event(event)
 
-    def _emit_binding_updated_event(self, binding: bm.Binding) -> None:
+    def _emit_binding_updated_event(self, binding: m.Binding) -> None:
         binding = bev.Binding.map(binding)
         data = bev.BindingUpdatedEventData(
             binding=binding,
@@ -74,7 +73,7 @@ class MediaService:
         )
         self._emit_event(event)
 
-    def _emit_binding_deleted_event(self, binding: bm.Binding) -> None:
+    def _emit_binding_deleted_event(self, binding: m.Binding) -> None:
         binding = bev.Binding.map(binding)
         data = bev.BindingDeletedEventData(
             binding=binding,
@@ -167,7 +166,7 @@ class MediaService:
 
     async def _update_handle_bindings(
         self, transaction: DatatunesService, old: m.Media, new: m.Media
-    ) -> builtins.list[bm.Binding]:
+    ) -> builtins.list[m.Binding]:
         bindings = []
 
         if new.id != old.id:
@@ -269,7 +268,7 @@ class MediaService:
 
     async def _delete_handle_bindings(
         self, transaction: DatatunesService, media: m.Media
-    ) -> builtins.list[bm.Binding]:
+    ) -> builtins.list[m.Binding]:
         bindings = await transaction.binding.find_many(
             where={
                 "mediaId": media.id,
