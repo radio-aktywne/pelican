@@ -7,7 +7,6 @@ from litestar.channels import ChannelsPlugin
 from emitunes.models.events import binding as bev
 from emitunes.models.events import playlist as pev
 from emitunes.models.events.event import Event
-from emitunes.services.bindings import models as bm
 from emitunes.services.datatunes import errors as de
 from emitunes.services.datatunes.service import DatatunesService
 from emitunes.services.playlists import errors as e
@@ -60,7 +59,7 @@ class PlaylistsService:
         )
         self._emit_event(event)
 
-    def _emit_binding_updated_event(self, binding: bm.Binding) -> None:
+    def _emit_binding_updated_event(self, binding: m.Binding) -> None:
         binding = bev.Binding.map(binding)
         data = bev.BindingUpdatedEventData(
             binding=binding,
@@ -70,7 +69,7 @@ class PlaylistsService:
         )
         self._emit_event(event)
 
-    def _emit_binding_deleted_event(self, binding: bm.Binding) -> None:
+    def _emit_binding_deleted_event(self, binding: m.Binding) -> None:
         binding = bev.Binding.map(binding)
         data = bev.BindingDeletedEventData(
             binding=binding,
@@ -164,7 +163,7 @@ class PlaylistsService:
         transaction: DatatunesService,
         old: m.Playlist,
         new: m.Playlist,
-    ) -> builtins.list[bm.Binding]:
+    ) -> builtins.list[m.Binding]:
         bindings = []
 
         if new.id != old.id:
@@ -249,7 +248,7 @@ class PlaylistsService:
         self,
         transaction: DatatunesService,
         playlist: m.Playlist,
-    ) -> builtins.list[bm.Binding]:
+    ) -> builtins.list[m.Binding]:
         bindings = await transaction.binding.find_many(
             where={
                 "playlistId": playlist.id,

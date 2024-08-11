@@ -1,4 +1,5 @@
 from typing import Literal
+from uuid import UUID
 
 from emitunes.models.base import SerializableModel
 from emitunes.models.events import types as t
@@ -8,7 +9,7 @@ from emitunes.services.media import models as mm
 class Media(SerializableModel):
     """Media data."""
 
-    id: str
+    id: UUID
     """Identifier of the media."""
 
     name: str

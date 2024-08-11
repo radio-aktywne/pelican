@@ -2,14 +2,12 @@ from uuid import UUID
 
 from emitunes.models.base import SerializableModel, datamodel, serializable
 from emitunes.services.bindings import models as bm
-from emitunes.services.media import models as mm
-from emitunes.services.playlists import models as pm
 
 
 class Playlist(SerializableModel):
     """Playlist data."""
 
-    id: str
+    id: UUID
     """Identifier of the playlist."""
 
     name: str
@@ -19,7 +17,7 @@ class Playlist(SerializableModel):
     """Bindings that the playlist belongs to."""
 
     @staticmethod
-    def map(playlist: pm.Playlist) -> "Playlist":
+    def map(playlist: bm.Playlist) -> "Playlist":
         return Playlist(
             id=playlist.id,
             name=playlist.name,
@@ -34,7 +32,7 @@ class Playlist(SerializableModel):
 class Media(SerializableModel):
     """Media data."""
 
-    id: str
+    id: UUID
     """Identifier of the media."""
 
     name: str
@@ -44,7 +42,7 @@ class Media(SerializableModel):
     """Bindings that the media belongs to."""
 
     @staticmethod
-    def map(media: mm.Media) -> "Media":
+    def map(media: bm.Media) -> "Media":
         return Media(
             id=media.id,
             name=media.name,
@@ -59,13 +57,13 @@ class Media(SerializableModel):
 class Binding(SerializableModel):
     """Binding data."""
 
-    id: str
+    id: UUID
     """Identifier of the binding."""
 
-    playlist_id: str
+    playlist_id: UUID
     """Identifier of the playlist that the binding belongs to."""
 
-    media_id: str
+    media_id: UUID
     """Identifier of the media that the binding belongs to."""
 
     rank: str

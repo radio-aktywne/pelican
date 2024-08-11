@@ -1,4 +1,5 @@
 from typing import Literal
+from uuid import UUID
 
 from emitunes.models.base import SerializableModel
 from emitunes.models.events import types as t
@@ -8,7 +9,7 @@ from emitunes.services.playlists import models as pm
 class Playlist(SerializableModel):
     """Playlist data."""
 
-    id: str
+    id: UUID
     """Identifier of the playlist."""
 
     name: str

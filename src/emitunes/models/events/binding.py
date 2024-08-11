@@ -1,4 +1,5 @@
 from typing import Literal
+from uuid import UUID
 
 from emitunes.models.base import SerializableModel
 from emitunes.models.events import types as t
@@ -8,13 +9,13 @@ from emitunes.services.bindings import models as bm
 class Binding(SerializableModel):
     """Binding data."""
 
-    id: str
+    id: UUID
     """Identifier of the binding."""
 
-    playlist_id: str
+    playlist_id: UUID
     """Identifier of the playlist that the binding belongs to."""
 
-    media_id: str
+    media_id: UUID
     """Identifier of the media that the binding belongs to."""
 
     rank: str

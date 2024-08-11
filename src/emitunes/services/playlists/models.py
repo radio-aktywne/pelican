@@ -2,6 +2,10 @@ from emitunes.models.base import datamodel
 from emitunes.services.datatunes import models as dm
 from emitunes.services.datatunes import types as dt
 
+Binding = dm.Binding
+
+Media = dm.Media
+
 Playlist = dm.Playlist
 
 PlaylistWhereInput = dt.PlaylistWhereInput
