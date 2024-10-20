@@ -3,9 +3,9 @@ slug: /
 title: Index
 ---
 
-# emitunes app
+# emitunes
 
-Emission playlists 💽
+Broadcast playlists 💽
 
 ## 💡 About
 

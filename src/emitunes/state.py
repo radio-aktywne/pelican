@@ -6,10 +6,10 @@ from emitunes.services.mediatunes.service import MediatunesService
 
 
 class State(LitestarState):
-    """Use this class as a type hint for the state of the application."""
+    """Use this class as a type hint for the state of the service."""
 
     config: Config
-    """Configuration for the application."""
+    """Configuration for the service."""
 
     datatunes: DatatunesService
     """Service for datatunes database."""
