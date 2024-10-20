@@ -12,7 +12,7 @@ You can configure the service at runtime using various environment variables:
   (default: `0.0.0.0`)
 - `PELICAN__SERVER__PORT` -
   port to run the server on
-  (default: `42000`)
+  (default: `10200`)
 - `PELICAN__SERVER__TRUSTED` -
   trusted IP addresses
   (default: `*`)
@@ -21,7 +21,7 @@ You can configure the service at runtime using various environment variables:
   (default: `localhost`)
 - `PELICAN__GRAPHITE__SQL__PORT` -
   port of the SQL API of the graphite database
-  (default: `41000`)
+  (default: `10220`)
 - `PELICAN__GRAPHITE__SQL__PASSWORD` -
   password to authenticate with the SQL API of the graphite database
   (default: `password`)
@@ -33,7 +33,7 @@ You can configure the service at runtime using various environment variables:
   (default: `localhost`)
 - `PELICAN__MINIUM__S3__PORT` -
   port of the S3 API of the minium database
-  (default: `40000`)
+  (default: `10210`)
 - `PELICAN__MINIUM__S3__USER` -
   user to authenticate with the S3 API of the minium database
   (default: `readwrite`)

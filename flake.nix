@@ -93,7 +93,7 @@
 
             shellHook = ''
               export TMPDIR=/tmp
-              export PRISMA_DB_URL="postgres://user:''${PELICAN__GRAPHITE__SQL__PASSWORD:-password}@''${PELICAN__GRAPHITE__SQL__HOST:-localhost}:''${PELICAN__GRAPHITE__SQL__PORT:-41000}/database"
+              export PRISMA_DB_URL="postgres://user:''${PELICAN__GRAPHITE__SQL__PASSWORD:-password}@''${PELICAN__GRAPHITE__SQL__HOST:-localhost}:''${PELICAN__GRAPHITE__SQL__PORT:-10220}/database"
             '';
           };
 

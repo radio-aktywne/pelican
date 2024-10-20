@@ -24,7 +24,7 @@ curl \
     --request POST \
     --header "Content-Type: application/json" \
     --data '{"name": "My Media"}' \
-    http://localhost:42000/media
+    http://localhost:10200/media
 ```
 
 ## Uploading and downloading media content
@@ -41,7 +41,7 @@ curl \
     --header "Content-Type: audio/mpeg" \
     --header "Transfer-Encoding: chunked" \
     --upload-file my-media.mp3 \
-    http://localhost:42000/media/d06997da-6072-4a06-b7d4-6dd46cbbf716/content
+    http://localhost:10200/media/d06997da-6072-4a06-b7d4-6dd46cbbf716/content
 ```
 
 To download media content, you can use
@@ -52,7 +52,7 @@ and save the response body to a file:
 curl \
     --request GET \
     --output my-media.mp3 \
-    http://localhost:42000/media/d06997da-6072-4a06-b7d4-6dd46cbbf716/content
+    http://localhost:10200/media/d06997da-6072-4a06-b7d4-6dd46cbbf716/content
 ```
 
 ## Retrieving playlists in M3U format
@@ -67,7 +67,7 @@ to send a `GET` request and save the response body to a file:
 curl \
     --request GET \
     --output my-playlist.m3u \
-    http://localhost:42000/playlists/944f57ed-56eb-43a4-bc80-0667b9f0c1e7/m3u
+    http://localhost:10200/playlists/944f57ed-56eb-43a4-bc80-0667b9f0c1e7/m3u
 ```
 
 ## Ping
@@ -82,7 +82,7 @@ For example, you can use `curl` to do that:
 curl \
     --request HEAD \
     --head \
-    http://localhost:42000/ping
+    http://localhost:10200/ping
 ```
 
 ## Server-Sent Events
@@ -97,5 +97,5 @@ For example, you can use `curl` to do that:
 curl \
     --request GET \
     --no-buffer \
-    http://localhost:42000/sse
+    http://localhost:10200/sse
 ```

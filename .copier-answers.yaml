@@ -10,7 +10,7 @@ envprefix: PELICAN
 events: true
 imagename: services/pelican
 importname: pelican
-port: 42000
+port: 10200
 registry: true
 releases: true
 reponame: pelican
