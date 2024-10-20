@@ -7,9 +7,9 @@ from litestar import Litestar
 from litestar.testing import AsyncTestClient
 from prisma import Prisma
 
-from emitunes.api.app import AppBuilder
-from emitunes.config.builder import ConfigBuilder
-from emitunes.config.models import Config
+from pelican.api.app import AppBuilder
+from pelican.config.builder import ConfigBuilder
+from pelican.config.models import Config
 from tests.utils.containers import AsyncDockerContainer
 from tests.utils.waiting.conditions import CallableCondition
 from tests.utils.waiting.strategies import TimeoutStrategy
@@ -31,8 +31,8 @@ def app(config: Config) -> Litestar:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def datatunes() -> AsyncGenerator[AsyncDockerContainer]:
-    """Datatunes container."""
+async def graphite() -> AsyncGenerator[AsyncDockerContainer]:
+    """Graphite container."""
 
     async def _check() -> None:
         async with Prisma(
@@ -41,7 +41,7 @@ async def datatunes() -> AsyncGenerator[AsyncDockerContainer]:
             return
 
     container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/databases/datatunes:latest",
+        "ghcr.io/radio-aktywne/databases/graphite:latest",
         network="host",
         privileged=True,
     )
@@ -57,8 +57,8 @@ async def datatunes() -> AsyncGenerator[AsyncDockerContainer]:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def mediatunes() -> AsyncGenerator[AsyncDockerContainer]:
-    """Mediatunes container."""
+async def minium() -> AsyncGenerator[AsyncDockerContainer]:
+    """Minium container."""
 
     async def _check() -> None:
         async with AsyncClient(base_url="http://localhost:40000") as client:
@@ -66,7 +66,7 @@ async def mediatunes() -> AsyncGenerator[AsyncDockerContainer]:
             response.raise_for_status()
 
     container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/databases/mediatunes:latest",
+        "ghcr.io/radio-aktywne/databases/minium:latest",
         network="host",
     )
 
@@ -82,7 +82,7 @@ async def mediatunes() -> AsyncGenerator[AsyncDockerContainer]:
 
 @pytest_asyncio.fixture(scope="session")
 async def client(
-    app: Litestar, datatunes: AsyncDockerContainer, mediatunes: AsyncDockerContainer
+    app: Litestar, graphite: AsyncDockerContainer, minium: AsyncDockerContainer
 ) -> AsyncGenerator[AsyncTestClient]:
     """Reusable test client."""
 

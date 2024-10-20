@@ -3,10 +3,10 @@ slug: /
 title: Index
 ---
 
-# emitunes
+# pelican
 
 Broadcast playlists 💽
 
 ## 💡 About
 
-`emitunes` is a service for managing playlists of songs.
+`pelican` is a service for managing playlists of songs.

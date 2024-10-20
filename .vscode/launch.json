@@ -2,15 +2,15 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "emitunes",
+      "name": "pelican",
       "type": "debugpy",
       "request": "launch",
-      "module": "emitunes",
+      "module": "pelican",
       "justMyCode": false,
       "env": {
         "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}",
         "PYTHONPATH": "${workspaceFolder}/.venv/lib/python3.12/site-packages:${env:EXTRAPYTHONPATH}",
-        "EMITUNES__DEBUG": "true"
+        "PELICAN__DEBUG": "true"
       }
     }
   ]

@@ -4,16 +4,16 @@ _src_path: gh:radio-aktywne/template-service-litestar
 accountname: radio-aktywne
 description: Broadcast playlists 💽
 docs: true
-docsurl: https://radio-aktywne.github.io/emitunes
+docsurl: https://radio-aktywne.github.io/pelican
 email: it@radioaktywne.pl
-envprefix: EMITUNES
+envprefix: PELICAN
 events: true
-imagename: services/emitunes
-importname: emitunes
+imagename: services/pelican
+importname: pelican
 port: 42000
 registry: true
 releases: true
-reponame: emitunes
-repourl: https://github.com/radio-aktywne/emitunes
-servicename: emitunes
+reponame: pelican
+repourl: https://github.com/radio-aktywne/pelican
+servicename: pelican
 sse: true

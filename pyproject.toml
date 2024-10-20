@@ -1,6 +1,6 @@
 [tool.poetry]
 package-mode = true
-name = "emitunes"
+name = "pelican"
 version = "0.5.0"
 description = "Broadcast playlists 💽"
 authors = ["radio-aktywne <it@radioaktywne.pl>"]
@@ -42,7 +42,7 @@ binary_cache_dir = "prisma/bin"
 
 [tool.poetry.scripts]
 # Register CLI
-emitunes = "emitunes.__main__:cli"
+pelican = "pelican.__main__:cli"
 
 # See: https://python-poetry.org/docs/pyproject/#poetry-and-pep-517
 [build-system]
