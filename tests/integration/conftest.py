@@ -36,7 +36,7 @@ async def graphite() -> AsyncGenerator[AsyncDockerContainer]:
 
     async def _check() -> None:
         async with Prisma(
-            datasource={"url": "postgres://user:password@localhost:41000/database"}
+            datasource={"url": "postgres://user:password@localhost:10220/database"}
         ):
             return
 
@@ -61,7 +61,7 @@ async def minium() -> AsyncGenerator[AsyncDockerContainer]:
     """Minium container."""
 
     async def _check() -> None:
-        async with AsyncClient(base_url="http://localhost:40000") as client:
+        async with AsyncClient(base_url="http://localhost:10210") as client:
             response = await client.get("/minio/health/ready")
             response.raise_for_status()
 

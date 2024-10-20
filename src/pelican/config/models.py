@@ -9,7 +9,7 @@ class ServerConfig(BaseModel):
     host: str = "0.0.0.0"
     """Host to run the server on."""
 
-    port: int = Field(42000, ge=0, le=65535)
+    port: int = Field(10200, ge=0, le=65535)
     """Port to run the server on."""
 
     trusted: str | list[str] | None = "*"
@@ -22,7 +22,7 @@ class GraphiteSQLConfig(BaseModel):
     host: str = "localhost"
     """Host of the SQL API."""
 
-    port: int = Field(41000, ge=1, le=65535)
+    port: int = Field(10220, ge=1, le=65535)
     """Port of the SQL API."""
 
     password: str = "password"
@@ -51,7 +51,7 @@ class MiniumS3Config(BaseModel):
     host: str = "localhost"
     """Host of the S3 API."""
 
-    port: int | None = Field(40000, ge=1, le=65535)
+    port: int | None = Field(10210, ge=1, le=65535)
     """Port of the S3 API."""
 
     user: str = "readwrite"
