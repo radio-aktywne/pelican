@@ -1,7 +1,7 @@
 [tool.poetry]
 package-mode = true
 name = "pelican"
-version = "0.5.0"
+version = "0.6.0"
 description = "Broadcast playlists 💽"
 authors = ["radio-aktywne <it@radioaktywne.pl>"]
 
