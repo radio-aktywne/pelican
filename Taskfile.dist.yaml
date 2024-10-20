@@ -228,8 +228,8 @@ tasks:
         --
         pytest
         {{ .CLI_ARGS }}
-  pull-datatunes:
-    desc: Pull datatunes models
+  pull-graphite:
+    desc: Pull graphite models
     cmds:
       - task: install-internal
       - task: generate-prisma-internal
@@ -241,8 +241,8 @@ tasks:
         db
         pull
         {{ .CLI_ARGS }}
-  push-datatunes:
-    desc: Push schema to datatunes without migrations
+  push-graphite:
+    desc: Push schema to graphite without migrations
     cmds:
       - task: install-internal
       - task: generate-prisma-internal
@@ -255,7 +255,7 @@ tasks:
         push
         {{ .CLI_ARGS }}
   migrate-dev:
-    desc: Apply migrations to datatunes in development mode
+    desc: Apply migrations to graphite in development mode
     cmds:
       - task: install-internal
       - task: generate-prisma-internal
@@ -268,7 +268,7 @@ tasks:
         dev
         {{ .CLI_ARGS }}
   migrate:
-    desc: Apply migrations to datatunes in production mode
+    desc: Apply migrations to graphite in production mode
     cmds:
       - task: install-internal
       - task: generate-prisma-internal
@@ -295,7 +295,7 @@ tasks:
         .env.python
         run
         --
-        emitunes
+        pelican
         {{ .CLI_ARGS }}
   docker:
     desc: Run in docker container
