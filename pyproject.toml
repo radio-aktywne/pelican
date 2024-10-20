@@ -2,7 +2,7 @@
 package-mode = true
 name = "emitunes"
 version = "0.5.0"
-description = "Emission playlists 💽"
+description = "Broadcast playlists 💽"
 authors = ["radio-aktywne <it@radioaktywne.pl>"]
 
 [tool.poetry.dependencies]
