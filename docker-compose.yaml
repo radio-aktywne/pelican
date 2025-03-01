@@ -15,5 +15,5 @@ services:
       - "PELICAN__MINIUM__S3__PORT=${PELICAN__MINIUM__S3__PORT:-10210}"
       - "PELICAN__MINIUM__S3__USER=${PELICAN__MINIUM__S3__USER:-readwrite}"
       - "PELICAN__MINIUM__S3__PASSWORD=${PELICAN__MINIUM__S3__PASSWORD:-password}"
-      - "PELICAN__DEBUG=${PELICAN__DEBUG:-false}"
+      - "PELICAN__DEBUG=${PELICAN__DEBUG:-true}"
     network_mode: host

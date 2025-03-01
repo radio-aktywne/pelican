@@ -42,4 +42,4 @@ You can configure the service at runtime using various environment variables:
   (default: `password`)
 - `PELICAN__DEBUG` -
   enable debug mode
-  (default: `false`)
+  (default: `true`)
