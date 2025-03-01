@@ -95,5 +95,5 @@ class Config(BaseConfig):
     minium: MiniumConfig = MiniumConfig()
     """Configuration for the minium database."""
 
-    debug: bool = False
+    debug: bool = True
     """Enable debug mode."""

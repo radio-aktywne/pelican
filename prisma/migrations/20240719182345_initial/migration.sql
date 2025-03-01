@@ -1,28 +1,25 @@
 -- CreateTable
-CREATE TABLE
-  "media" (
-    "id" UUID NOT NULL,
-    "name" STRING(255) NOT NULL,
-    CONSTRAINT "media_pkey" PRIMARY KEY ("id")
-  );
+CREATE TABLE "media" (
+  "id" UUID NOT NULL,
+  "name" STRING(255) NOT NULL,
+  CONSTRAINT "media_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
-CREATE TABLE
-  "playlists" (
-    "id" UUID NOT NULL,
-    "name" STRING(255) NOT NULL,
-    CONSTRAINT "playlists_pkey" PRIMARY KEY ("id")
-  );
+CREATE TABLE "playlists" (
+  "id" UUID NOT NULL,
+  "name" STRING(255) NOT NULL,
+  CONSTRAINT "playlists_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
-CREATE TABLE
-  "bindings" (
-    "id" UUID NOT NULL,
-    "playlist_id" UUID NOT NULL,
-    "media_id" UUID NOT NULL,
-    "rank" STRING(16384) NOT NULL,
-    CONSTRAINT "bindings_pkey" PRIMARY KEY ("id")
-  );
+CREATE TABLE "bindings" (
+  "id" UUID NOT NULL,
+  "playlist_id" UUID NOT NULL,
+  "media_id" UUID NOT NULL,
+  "rank" STRING(16384) NOT NULL,
+  CONSTRAINT "bindings_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateIndex
 CREATE UNIQUE INDEX "name_unique" ON "media" ("name");
