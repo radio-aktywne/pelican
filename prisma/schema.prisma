@@ -1,5 +1,5 @@
 datasource db {
-  provider = "cockroachdb"
+  provider = "postgresql"
   url      = env("PRISMA_DB_URL")
 }
 
@@ -17,7 +17,7 @@ model Media {
   /// Identifier of the media
   id   String @id(map: "media_pkey") @default(uuid()) @map("id") @db.Uuid
   /// Name of the media
-  name String @unique(map: "name_unique") @map("name") @db.String(255)
+  name String @unique(map: "media_name_unique") @map("name") @db.Text
 
   /// Bindings that the media belongs to
   bindings Binding[]
@@ -30,7 +30,7 @@ model Playlist {
   /// Identifier of the playlist
   id   String @id(map: "playlists_pkey") @default(uuid()) @map("id") @db.Uuid
   /// Name of the playlist
-  name String @unique(map: "name_unique") @map("name") @db.String(255)
+  name String @unique(map: "playlists_name_unique") @map("name") @db.Text
 
   /// Bindings that the playlist belongs to
   bindings Binding[]
@@ -47,13 +47,13 @@ model Binding {
   /// Identifier of the media
   mediaId    String @map("media_id") @db.Uuid
   /// Rank of the media in the playlist
-  rank       String @map("rank") @db.String(16384)
+  rank       String @map("rank") @db.Text
 
   /// Playlist that the binding belongs to
-  playlist Playlist @relation(fields: [playlistId], references: [id], map: "playlist_id_fkey", onDelete: NoAction, onUpdate: NoAction)
+  playlist Playlist @relation(fields: [playlistId], references: [id], map: "bindings_playlist_id_fkey", onDelete: NoAction, onUpdate: NoAction)
   /// Media that the binding belongs to
-  media    Media    @relation(fields: [mediaId], references: [id], map: "media_id_fkey", onDelete: NoAction, onUpdate: NoAction)
+  media    Media    @relation(fields: [mediaId], references: [id], map: "bindings_media_id_fkey", onDelete: NoAction, onUpdate: NoAction)
 
-  @@unique([playlistId, rank], map: "playlist_id_rank_unique")
+  @@unique([playlistId, rank], map: "bindings_playlist_id_rank_unique")
   @@map("bindings")
 }
