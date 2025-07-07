@@ -32,8 +32,8 @@ CREATE UNIQUE INDEX "bindings_playlist_id_rank_unique" ON "bindings" ("playlist_
 
 -- AddForeignKey
 ALTER TABLE "bindings"
-ADD CONSTRAINT "bindings_playlist_id_fkey" FOREIGN KEY ("playlist_id") REFERENCES "playlists" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+ADD CONSTRAINT "bindings_playlist_id_fkey" FOREIGN KEY ("playlist_id") REFERENCES "playlists" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "bindings"
-ADD CONSTRAINT "bindings_media_id_fkey" FOREIGN KEY ("media_id") REFERENCES "media" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+ADD CONSTRAINT "bindings_media_id_fkey" FOREIGN KEY ("media_id") REFERENCES "media" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
