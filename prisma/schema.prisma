@@ -50,9 +50,9 @@ model Binding {
   rank       String @map("rank") @db.Text
 
   /// Playlist that the binding belongs to
-  playlist Playlist @relation(fields: [playlistId], references: [id], map: "bindings_playlist_id_fkey", onDelete: NoAction, onUpdate: NoAction)
+  playlist Playlist @relation(fields: [playlistId], references: [id], map: "bindings_playlist_id_fkey", onDelete: Cascade, onUpdate: Cascade)
   /// Media that the binding belongs to
-  media    Media    @relation(fields: [mediaId], references: [id], map: "bindings_media_id_fkey", onDelete: NoAction, onUpdate: NoAction)
+  media    Media    @relation(fields: [mediaId], references: [id], map: "bindings_media_id_fkey", onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([playlistId, rank], map: "bindings_playlist_id_rank_unique")
   @@map("bindings")
