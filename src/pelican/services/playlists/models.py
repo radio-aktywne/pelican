@@ -1,3 +1,7 @@
+# ruff: noqa: SLF001
+
+from collections.abc import Sequence
+
 from pelican.models.base import datamodel
 from pelican.services.graphite import models as gm
 from pelican.services.graphite import types as gt
@@ -61,7 +65,7 @@ class ListRequest:
     include: PlaylistInclude | None
     """Relations to include in the response."""
 
-    order: PlaylistOrderByInput | list[PlaylistOrderByInput] | None
+    order: PlaylistOrderByInput | Sequence[PlaylistOrderByInput] | None
     """Order to apply to the results."""
 
 
@@ -69,7 +73,7 @@ class ListRequest:
 class ListResponse:
     """Response for listing playlists."""
 
-    playlists: list[Playlist]
+    playlists: Sequence[Playlist]
     """List of playlists that match the filter."""
 
 

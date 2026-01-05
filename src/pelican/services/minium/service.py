@@ -2,6 +2,7 @@ import asyncio
 from collections.abc import Generator
 from contextlib import contextmanager
 from enum import StrEnum
+from typing import BinaryIO, cast
 
 from minio import Minio
 from minio.commonconfig import CopySource
@@ -36,13 +37,13 @@ class MiniumService:
         )
         self._bucket = config.s3.bucket
 
-    def _map_object(self, object: Object) -> m.Object:
+    def _map_object(self, obj: Object) -> m.Object:
         return m.Object(
-            name=object.object_name,
-            modified=object.last_modified,
-            size=object.size,
-            metadata=object.metadata,
-            type=object.content_type,
+            name=str(obj.object_name),
+            modified=obj.last_modified,
+            size=obj.size,
+            metadata=dict(obj.metadata) if obj.metadata else None,
+            type=obj.content_type,
         )
 
     @contextmanager
@@ -62,7 +63,6 @@ class MiniumService:
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List objects."""
-
         bucket = self._bucket
         prefix = request.prefix
         recursive = request.recursive
@@ -75,7 +75,7 @@ class MiniumService:
                 recursive=recursive,
             )
 
-        objects = (self._map_object(object) for object in objects)
+        objects = (self._map_object(obj) for obj in objects)
         objects = asyncify.iterator(objects)
 
         return m.ListResponse(
@@ -84,12 +84,11 @@ class MiniumService:
 
     async def upload(self, request: m.UploadRequest) -> m.UploadResponse:
         """Upload an object."""
-
         bucket = self._bucket
         name = request.name
         data = ReadableIterator(syncify.iterator(request.content.data))
         length = -1
-        type = request.content.type
+        content_type = request.content.type
         chunk = request.chunk
 
         with self._handle_errors():
@@ -97,9 +96,9 @@ class MiniumService:
                 self._client.put_object,
                 bucket_name=bucket,
                 object_name=name,
-                data=data,
+                data=cast("BinaryIO", data),
                 length=length,
-                content_type=type,
+                content_type=content_type,
                 part_size=chunk,
             )
 
@@ -109,45 +108,41 @@ class MiniumService:
 
         res = await self.get(req)
 
-        object = res.object
+        obj = res.object
 
         return m.UploadResponse(
-            object=object,
+            object=obj,
         )
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get an object."""
-
         bucket = self._bucket
         name = request.name
 
-        with self._handle_errors():
-            with self._handle_not_found(name):
-                object = await asyncio.to_thread(
-                    self._client.stat_object,
-                    bucket_name=bucket,
-                    object_name=name,
-                )
+        with self._handle_errors(), self._handle_not_found(name):
+            obj = await asyncio.to_thread(
+                self._client.stat_object,
+                bucket_name=bucket,
+                object_name=name,
+            )
 
-        object = self._map_object(object)
+        obj = self._map_object(obj)
 
         return m.GetResponse(
-            object=object,
+            object=obj,
         )
 
     async def download(self, request: m.DownloadRequest) -> m.DownloadResponse:
         """Download an object."""
-
         bucket = self._bucket
         name = request.name
 
-        with self._handle_errors():
-            with self._handle_not_found(name):
-                res = await asyncio.to_thread(
-                    self._client.get_object,
-                    bucket_name=bucket,
-                    object_name=name,
-                )
+        with self._handle_errors(), self._handle_not_found(name):
+            res = await asyncio.to_thread(
+                self._client.get_object,
+                bucket_name=bucket,
+                object_name=name,
+            )
 
         def _data(res: BaseHTTPResponse, chunk: int) -> Generator[bytes]:
             try:
@@ -156,7 +151,7 @@ class MiniumService:
                 res.close()
                 res.release_conn()
 
-        type = res.headers["Content-Type"]
+        content_type = res.headers["Content-Type"]
         size = int(res.headers["Content-Length"])
         tag = res.headers["ETag"]
         modified = httpparse(res.headers["Last-Modified"])
@@ -165,7 +160,7 @@ class MiniumService:
         data = asyncify.iterator(_data(res, chunk))
 
         content = m.DownloadContent(
-            type=type,
+            type=content_type,
             size=size,
             tag=tag,
             modified=modified,
@@ -177,22 +172,20 @@ class MiniumService:
 
     async def copy(self, request: m.CopyRequest) -> m.CopyResponse:
         """Copy an object."""
-
         bucket = self._bucket
         source = request.source
         destination = request.destination
 
-        with self._handle_errors():
-            with self._handle_not_found(source):
-                await asyncio.to_thread(
-                    self._client.copy_object,
+        with self._handle_errors(), self._handle_not_found(source):
+            await asyncio.to_thread(
+                self._client.copy_object,
+                bucket_name=bucket,
+                object_name=destination,
+                source=CopySource(
                     bucket_name=bucket,
-                    object_name=destination,
-                    source=CopySource(
-                        bucket_name=bucket,
-                        object_name=source,
-                    ),
-                )
+                    object_name=source,
+                ),
+            )
 
         req = m.GetRequest(
             name=destination,
@@ -200,15 +193,14 @@ class MiniumService:
 
         res = await self.get(req)
 
-        object = res.object
+        obj = res.object
 
         return m.CopyResponse(
-            object=object,
+            object=obj,
         )
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete an object."""
-
         bucket = self._bucket
         name = request.name
 
@@ -218,19 +210,18 @@ class MiniumService:
 
         res = await self.get(req)
 
-        object = res.object
+        obj = res.object
 
-        if object is None:
+        if obj is None:
             raise e.NotFoundError(name)
 
-        with self._handle_errors():
-            with self._handle_not_found(name):
-                await asyncio.to_thread(
-                    self._client.remove_object,
-                    bucket_name=bucket,
-                    object_name=name,
-                )
+        with self._handle_errors(), self._handle_not_found(name):
+            await asyncio.to_thread(
+                self._client.remove_object,
+                bucket_name=bucket,
+                object_name=name,
+            )
 
         return m.DeleteResponse(
-            object=object,
+            object=obj,
         )

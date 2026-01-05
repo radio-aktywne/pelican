@@ -8,4 +8,4 @@ class M3U:
         self._entries = entries
 
     def __str__(self) -> str:
-        return "\n".join(list(self._entries) + [""])
+        return "\n".join([*list(self._entries), ""])

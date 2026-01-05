@@ -1,9 +1,12 @@
 from typing import Literal
 from uuid import UUID
 
+from pydantic import Field
+
 from pelican.models.base import SerializableModel
 from pelican.models.events import types as t
 from pelican.services.playlists import models as pm
+from pelican.utils.time import naiveutcnow
 
 
 class Playlist(SerializableModel):
@@ -17,8 +20,9 @@ class Playlist(SerializableModel):
 
     @staticmethod
     def map(playlist: pm.Playlist) -> "Playlist":
+        """Map to internal representation."""
         return Playlist(
-            id=playlist.id,
+            id=UUID(playlist.id),
             name=playlist.name,
         )
 
@@ -33,9 +37,9 @@ class PlaylistCreatedEventData(SerializableModel):
 class PlaylistCreatedEvent(SerializableModel):
     """Event that is emitted when playlist is created."""
 
-    type: t.TypeFieldType[Literal["playlist-created"]] = "playlist-created"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[PlaylistCreatedEventData]
+    type: t.TypeField[Literal["playlist-created"]] = "playlist-created"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[PlaylistCreatedEventData]
 
 
 class PlaylistUpdatedEventData(SerializableModel):
@@ -48,9 +52,9 @@ class PlaylistUpdatedEventData(SerializableModel):
 class PlaylistUpdatedEvent(SerializableModel):
     """Event that is emitted when playlist is updated."""
 
-    type: t.TypeFieldType[Literal["playlist-updated"]] = "playlist-updated"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[PlaylistUpdatedEventData]
+    type: t.TypeField[Literal["playlist-updated"]] = "playlist-updated"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[PlaylistUpdatedEventData]
 
 
 class PlaylistDeletedEventData(SerializableModel):
@@ -63,6 +67,6 @@ class PlaylistDeletedEventData(SerializableModel):
 class PlaylistDeletedEvent(SerializableModel):
     """Event that is emitted when playlist is deleted."""
 
-    type: t.TypeFieldType[Literal["playlist-deleted"]] = "playlist-deleted"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[PlaylistDeletedEventData]
+    type: t.TypeField[Literal["playlist-deleted"]] = "playlist-deleted"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[PlaylistDeletedEventData]

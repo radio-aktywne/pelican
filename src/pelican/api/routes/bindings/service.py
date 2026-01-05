@@ -27,7 +27,6 @@ class Service:
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List bindings."""
-
         limit = request.limit
         offset = request.offset
         where = request.where
@@ -69,13 +68,12 @@ class Service:
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get binding."""
-
-        id = request.id
+        binding_id = request.id
         include = request.include
 
         req = bm.GetRequest(
             where={
-                "id": str(id),
+                "id": str(binding_id),
             },
             include=include,
         )
@@ -86,7 +84,7 @@ class Service:
         binding = res.binding
 
         if binding is None:
-            raise e.BindingNotFoundError(id)
+            raise e.BindingNotFoundError(binding_id)
 
         binding = m.Binding.map(binding)
         return m.GetResponse(
@@ -95,7 +93,6 @@ class Service:
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create binding."""
-
         data = request.data
         include = request.include
 
@@ -116,15 +113,14 @@ class Service:
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update binding."""
-
         data = request.data
-        id = request.id
+        binding_id = request.id
         include = request.include
 
         req = bm.UpdateRequest(
             data=data,
             where={
-                "id": str(id),
+                "id": str(binding_id),
             },
             include=include,
         )
@@ -135,7 +131,7 @@ class Service:
         binding = res.binding
 
         if binding is None:
-            raise e.BindingNotFoundError(id)
+            raise e.BindingNotFoundError(binding_id)
 
         binding = m.Binding.map(binding)
         return m.UpdateResponse(
@@ -144,12 +140,11 @@ class Service:
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete binding."""
-
-        id = request.id
+        binding_id = request.id
 
         req = bm.DeleteRequest(
             where={
-                "id": str(id),
+                "id": str(binding_id),
             },
             include=None,
         )
@@ -160,6 +155,6 @@ class Service:
         binding = res.binding
 
         if binding is None:
-            raise e.BindingNotFoundError(id)
+            raise e.BindingNotFoundError(binding_id)
 
         return m.DeleteResponse()

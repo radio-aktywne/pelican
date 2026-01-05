@@ -1,3 +1,6 @@
+# pyright: reportIncompatibleVariableOverride=false
+
+from collections.abc import Sequence
 from uuid import UUID
 
 from pelican.models.base import SerializableModel, datamodel, serializable
@@ -27,10 +30,11 @@ class Binding(SerializableModel):
 
     @staticmethod
     def map(binding: pm.Binding) -> "Binding":
+        """Map to internal representation."""
         return Binding(
-            id=binding.id,
-            playlist_id=binding.playlistId,
-            media_id=binding.mediaId,
+            id=UUID(binding.id),
+            playlist_id=UUID(binding.playlistId),
+            media_id=UUID(binding.mediaId),
             rank=binding.rank,
             playlist=Playlist.map(binding.playlist) if binding.playlist else None,
             media=Media.map(binding.media) if binding.media else None,
@@ -46,13 +50,14 @@ class Media(SerializableModel):
     name: str
     """Name of the media."""
 
-    bindings: list[Binding] | None
+    bindings: Sequence[Binding] | None
     """Bindings that the media belongs to."""
 
     @staticmethod
     def map(media: pm.Media) -> "Media":
+        """Map to internal representation."""
         return Media(
-            id=media.id,
+            id=UUID(media.id),
             name=media.name,
             bindings=(
                 [Binding.map(binding) for binding in media.bindings]
@@ -71,13 +76,14 @@ class Playlist(SerializableModel):
     name: str
     """Name of the playlist."""
 
-    bindings: list[Binding] | None
+    bindings: Sequence[Binding] | None
     """Bindings that the playlist belongs to."""
 
     @staticmethod
     def map(playlist: pm.Playlist) -> "Playlist":
+        """Map to internal representation."""
         return Playlist(
-            id=playlist.id,
+            id=UUID(playlist.id),
             name=playlist.name,
             bindings=(
                 [Binding.map(binding) for binding in playlist.bindings]
@@ -99,23 +105,23 @@ class PlaylistList(SerializableModel):
     offset: int | None
     """Number of playlists skipped."""
 
-    playlists: list[Playlist]
+    playlists: Sequence[Playlist]
     """Playlists that matched the request."""
 
 
 @serializable
 class PlaylistWhereInput(pm.PlaylistWhereInput):
-    pass
+    """Filter to apply to find playlists."""
 
 
 @serializable
 class PlaylistWhereUniqueIdInput(pm.PlaylistWhereUniqueIdInput):
-    pass
+    """Filter to apply to find playlists by unique ID."""
 
 
 @serializable
 class PlaylistWhereUniqueNameInput(pm.PlaylistWhereUniqueNameInput):
-    pass
+    """Filter to apply to find playlists by unique name."""
 
 
 PlaylistWhereUniqueInput = PlaylistWhereUniqueIdInput | PlaylistWhereUniqueNameInput
@@ -123,17 +129,17 @@ PlaylistWhereUniqueInput = PlaylistWhereUniqueIdInput | PlaylistWhereUniqueNameI
 
 @serializable
 class PlaylistInclude(pm.PlaylistInclude):
-    pass
+    """Relations to include in the response."""
 
 
 @serializable
 class PlaylistOrderByIdInput(pm.PlaylistOrderByIdInput):
-    pass
+    """Order by playlist ID."""
 
 
 @serializable
 class PlaylistOrderByNameInput(pm.PlaylistOrderByNameInput):
-    pass
+    """Order by playlist name."""
 
 
 PlaylistOrderByInput = PlaylistOrderByIdInput | PlaylistOrderByNameInput
@@ -141,12 +147,12 @@ PlaylistOrderByInput = PlaylistOrderByIdInput | PlaylistOrderByNameInput
 
 @serializable
 class PlaylistCreateInput(pm.PlaylistCreateInput):
-    pass
+    """Data to create a playlist."""
 
 
 @serializable
 class PlaylistUpdateInput(pm.PlaylistUpdateInput):
-    pass
+    """Data to update a playlist."""
 
 
 ListRequestLimit = int | None
@@ -157,7 +163,7 @@ ListRequestWhere = PlaylistWhereInput | None
 
 ListRequestInclude = PlaylistInclude | None
 
-ListRequestOrder = PlaylistOrderByInput | list[PlaylistOrderByInput] | None
+ListRequestOrder = PlaylistOrderByInput | Sequence[PlaylistOrderByInput] | None
 
 ListResponseResults = PlaylistList
 
@@ -295,8 +301,6 @@ class DeleteRequest:
 @datamodel
 class DeleteResponse:
     """Response for deleting a playlist."""
-
-    pass
 
 
 @datamodel

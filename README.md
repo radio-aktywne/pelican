@@ -2,7 +2,7 @@
 
 <div align="center">
 
-Broadcast playlists 💽
+Broadcast playlists service 💽
 
 [![Lint](https://github.com/radio-aktywne/pelican/actions/workflows/lint.yaml/badge.svg)](https://github.com/radio-aktywne/pelican/actions/workflows/lint.yaml)
 [![Test](https://github.com/radio-aktywne/pelican/actions/workflows/test.yaml/badge.svg)](https://github.com/radio-aktywne/pelican/actions/workflows/test.yaml)
@@ -16,7 +16,8 @@ Broadcast playlists 💽
 
 ## 💡 About
 
-`pelican` is a service for managing playlists of songs.
+`pelican` is a [`Litestar`](https://litestar.dev) service
+for managing playlists of songs.
 
 ## 📄 Further Reading
 

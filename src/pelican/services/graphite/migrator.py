@@ -25,9 +25,8 @@ class GraphiteMigrator:
 
     def migrate(self) -> None:
         """Apply migrations."""
-
         try:
-            subprocess.run(
+            subprocess.run(  # noqa: S603
                 self._get_command(),
                 env=self._get_env(),
                 capture_output=True,

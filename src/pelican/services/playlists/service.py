@@ -1,6 +1,7 @@
 import builtins
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from contextlib import contextmanager
+from typing import cast
 
 from litestar.channels import ChannelsPlugin
 
@@ -8,6 +9,7 @@ from pelican.models.events import binding as bev
 from pelican.models.events import playlist as pev
 from pelican.models.events.event import Event
 from pelican.services.graphite import errors as ge
+from pelican.services.graphite import types as gt
 from pelican.services.graphite.service import GraphiteService
 from pelican.services.playlists import errors as e
 from pelican.services.playlists import models as m
@@ -30,54 +32,54 @@ class PlaylistsService:
         self._channels.publish(data, "events")
 
     def _emit_playlist_created_event(self, playlist: m.Playlist) -> None:
-        playlist = pev.Playlist.map(playlist)
-        data = pev.PlaylistCreatedEventData(
-            playlist=playlist,
+        mapped_playlist = pev.Playlist.map(playlist)
+        created_event_data = pev.PlaylistCreatedEventData(
+            playlist=mapped_playlist,
         )
-        event = pev.PlaylistCreatedEvent(
-            data=data,
+        created_event = pev.PlaylistCreatedEvent(
+            data=created_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(created_event)
 
     def _emit_playlist_updated_event(self, playlist: m.Playlist) -> None:
-        playlist = pev.Playlist.map(playlist)
-        data = pev.PlaylistUpdatedEventData(
-            playlist=playlist,
+        mapped_playlist = pev.Playlist.map(playlist)
+        updated_event_data = pev.PlaylistUpdatedEventData(
+            playlist=mapped_playlist,
         )
-        event = pev.PlaylistUpdatedEvent(
-            data=data,
+        updated_event = pev.PlaylistUpdatedEvent(
+            data=updated_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(updated_event)
 
     def _emit_playlist_deleted_event(self, playlist: m.Playlist) -> None:
-        playlist = pev.Playlist.map(playlist)
-        data = pev.PlaylistDeletedEventData(
-            playlist=playlist,
+        mapped_playlist = pev.Playlist.map(playlist)
+        deleted_event_data = pev.PlaylistDeletedEventData(
+            playlist=mapped_playlist,
         )
-        event = pev.PlaylistDeletedEvent(
-            data=data,
+        deleted_event = pev.PlaylistDeletedEvent(
+            data=deleted_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(deleted_event)
 
     def _emit_binding_updated_event(self, binding: m.Binding) -> None:
-        binding = bev.Binding.map(binding)
-        data = bev.BindingUpdatedEventData(
-            binding=binding,
+        mapped_binding = bev.Binding.map(binding)
+        updated_event_data = bev.BindingUpdatedEventData(
+            binding=mapped_binding,
         )
-        event = bev.BindingUpdatedEvent(
-            data=data,
+        updated_event = bev.BindingUpdatedEvent(
+            data=updated_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(updated_event)
 
     def _emit_binding_deleted_event(self, binding: m.Binding) -> None:
-        binding = bev.Binding.map(binding)
-        data = bev.BindingDeletedEventData(
-            binding=binding,
+        mapped_binding = bev.Binding.map(binding)
+        deleted_event_data = bev.BindingDeletedEventData(
+            binding=mapped_binding,
         )
-        event = bev.BindingDeletedEvent(
-            data=data,
+        deleted_event = bev.BindingDeletedEvent(
+            data=deleted_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(deleted_event)
 
     @contextmanager
     def _handle_errors(self) -> Generator[None]:
@@ -90,7 +92,6 @@ class PlaylistsService:
 
     async def count(self, request: m.CountRequest) -> m.CountResponse:
         """Count playlists."""
-
         where = request.where
 
         with self._handle_errors():
@@ -104,7 +105,6 @@ class PlaylistsService:
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List all playlists."""
-
         limit = request.limit
         offset = request.offset
         where = request.where
@@ -117,7 +117,7 @@ class PlaylistsService:
                 skip=offset,
                 where=where,
                 include=include,
-                order=order,
+                order=list(order) if isinstance(order, Sequence) else order,
             )
 
         return m.ListResponse(
@@ -126,7 +126,6 @@ class PlaylistsService:
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get playlist."""
-
         where = request.where
         include = request.include
 
@@ -142,13 +141,12 @@ class PlaylistsService:
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create playlist."""
-
         data = request.data
         include = request.include
 
         with self._handle_errors():
             playlist = await self._graphite.playlist.create(
-                data=data,
+                data=cast("gt.PlaylistCreateInput", data),
                 include=include,
             )
 
@@ -207,7 +205,6 @@ class PlaylistsService:
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update playlist."""
-
         data = request.data
         where = request.where
         include = request.include
@@ -224,7 +221,7 @@ class PlaylistsService:
                     )
 
                 new = await transaction.playlist.update(
-                    data=data,
+                    data=cast("gt.PlaylistUpdateInput", data),
                     where=where,
                     include=include,
                 )
@@ -267,7 +264,6 @@ class PlaylistsService:
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete playlist."""
-
         where = request.where
         include = request.include
 
@@ -295,7 +291,6 @@ class PlaylistsService:
 
     async def m3u(self, request: m.M3URequest) -> m.M3UResponse:
         """Get playlist in M3U format."""
-
         where = request.where
         base = request.base
 
@@ -318,7 +313,8 @@ class PlaylistsService:
 
         base = base.rstrip("/")
         urls = [
-            f"{base}/media/{binding.mediaId}/content" for binding in playlist.bindings
+            f"{base}/media/{binding.mediaId}/content"
+            for binding in playlist.bindings or []
         ]
 
         m3u = M3U(urls)

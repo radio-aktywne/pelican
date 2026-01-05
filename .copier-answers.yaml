@@ -1,13 +1,11 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: 0.18.0
+_commit: 0.19.0
 _src_path: gh:radio-aktywne/template-service-litestar
 accountname: radio-aktywne
-description: Broadcast playlists 💽
+description: Broadcast playlists service 💽
 docs: true
 docsurl: https://radio-aktywne.github.io/pelican
-email: it@radioaktywne.pl
 envprefix: PELICAN
-events: true
 imagename: services/pelican
 importname: pelican
 port: 10200
@@ -16,4 +14,3 @@ releases: true
 reponame: pelican
 repourl: https://github.com/radio-aktywne/pelican
 servicename: pelican
-sse: true

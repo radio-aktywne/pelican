@@ -1,3 +1,7 @@
+# ruff: noqa: SLF001
+
+from collections.abc import Sequence
+
 from pelican.models.base import datamodel
 from pelican.services.graphite import models as gm
 from pelican.services.graphite import types as gt
@@ -66,7 +70,7 @@ class ListRequest:
     include: MediaInclude | None
     """Relations to include in the response."""
 
-    order: MediaOrderByInput | list[MediaOrderByInput] | None
+    order: MediaOrderByInput | Sequence[MediaOrderByInput] | None
     """Order to apply to the results."""
 
 
@@ -74,7 +78,7 @@ class ListRequest:
 class ListResponse:
     """Response for listing media."""
 
-    media: list[Media]
+    media: Sequence[Media]
     """List of media that match the filter."""
 
 

@@ -27,7 +27,6 @@ class Service:
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List playlists."""
-
         limit = request.limit
         offset = request.offset
         where = request.where
@@ -69,13 +68,12 @@ class Service:
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get playlist."""
-
-        id = request.id
+        playlist_id = request.id
         include = request.include
 
         req = pm.GetRequest(
             where={
-                "id": str(id),
+                "id": str(playlist_id),
             },
             include=include,
         )
@@ -86,7 +84,7 @@ class Service:
         playlist = res.playlist
 
         if playlist is None:
-            raise e.PlaylistNotFoundError(id)
+            raise e.PlaylistNotFoundError(playlist_id)
 
         playlist = m.Playlist.map(playlist)
         return m.GetResponse(
@@ -95,7 +93,6 @@ class Service:
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create playlist."""
-
         data = request.data
         include = request.include
 
@@ -116,15 +113,14 @@ class Service:
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update playlist."""
-
         data = request.data
-        id = request.id
+        playlist_id = request.id
         include = request.include
 
         req = pm.UpdateRequest(
             data=data,
             where={
-                "id": str(id),
+                "id": str(playlist_id),
             },
             include=include,
         )
@@ -135,7 +131,7 @@ class Service:
         playlist = res.playlist
 
         if playlist is None:
-            raise e.PlaylistNotFoundError(id)
+            raise e.PlaylistNotFoundError(playlist_id)
 
         playlist = m.Playlist.map(playlist)
         return m.UpdateResponse(
@@ -144,12 +140,11 @@ class Service:
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete playlist."""
-
-        id = request.id
+        playlist_id = request.id
 
         req = pm.DeleteRequest(
             where={
-                "id": str(id),
+                "id": str(playlist_id),
             },
             include=None,
         )
@@ -160,19 +155,18 @@ class Service:
         playlist = res.playlist
 
         if playlist is None:
-            raise e.PlaylistNotFoundError(id)
+            raise e.PlaylistNotFoundError(playlist_id)
 
         return m.DeleteResponse()
 
     async def m3u(self, request: m.M3URequest) -> m.M3UResponse:
         """Get playlist in M3U format."""
-
-        id = request.id
+        playlist_id = request.id
         base = request.base
 
         req = pm.M3URequest(
             where={
-                "id": str(id),
+                "id": str(playlist_id),
             },
             base=base,
         )
@@ -183,7 +177,7 @@ class Service:
         m3u = res.m3u
 
         if m3u is None:
-            raise e.PlaylistNotFoundError(id)
+            raise e.PlaylistNotFoundError(playlist_id)
 
         return m.M3UResponse(
             m3u=m3u,
@@ -191,13 +185,12 @@ class Service:
 
     async def headm3u(self, request: m.HeadM3URequest) -> m.HeadM3UResponse:
         """Get headers for playlist in M3U format."""
-
-        id = request.id
+        playlist_id = request.id
         base = request.base
 
         req = pm.M3URequest(
             where={
-                "id": str(id),
+                "id": str(playlist_id),
             },
             base=base,
         )
@@ -208,7 +201,7 @@ class Service:
         m3u = res.m3u
 
         if m3u is None:
-            raise e.PlaylistNotFoundError(id)
+            raise e.PlaylistNotFoundError(playlist_id)
 
         return m.HeadM3UResponse(
             m3u=m3u,

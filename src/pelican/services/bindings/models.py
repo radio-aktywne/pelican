@@ -1,3 +1,6 @@
+# ruff: noqa: SLF001
+
+from collections.abc import Sequence
 from typing import TypedDict
 
 from pelican.models.base import datamodel
@@ -39,17 +42,23 @@ BindingOrderByInput = (
 
 
 class BindingOptionalCreateInput(TypedDict, total=False):
-    """Optional arguments to the Binding create method"""
+    """Optional arguments to the Binding create method."""
 
     id: str
+    """Identifier of the binding."""
 
 
 class BindingCreateInput(BindingOptionalCreateInput):
-    """Required arguments to the Binding create method"""
+    """Required arguments to the Binding create method."""
 
-    playlistId: str  # noqa: N815
-    mediaId: str  # noqa: N815
+    playlistId: str
+    """Identifier of the playlist."""
+
+    mediaId: str
+    """Identifier of the media."""
+
     rank: str
+    """Rank of the binding."""
 
 
 BindingUpdateInput = gt.BindingUpdateManyMutationInput
@@ -87,7 +96,7 @@ class ListRequest:
     include: BindingInclude | None
     """Relations to include in the response."""
 
-    order: BindingOrderByInput | list[BindingOrderByInput] | None
+    order: BindingOrderByInput | Sequence[BindingOrderByInput] | None
     """Order to apply to the results."""
 
 
@@ -95,7 +104,7 @@ class ListRequest:
 class ListResponse:
     """Response for listing bindings."""
 
-    bindings: list[Binding]
+    bindings: Sequence[Binding]
     """List of bindings that match the filter."""
 
 

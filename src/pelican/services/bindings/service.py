@@ -1,5 +1,6 @@
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from contextlib import contextmanager
+from typing import cast
 
 from fractional_indexing import FIError, validate_order_key
 from litestar.channels import ChannelsPlugin
@@ -9,6 +10,7 @@ from pelican.models.events.event import Event
 from pelican.services.bindings import errors as e
 from pelican.services.bindings import models as m
 from pelican.services.graphite import errors as ge
+from pelican.services.graphite import types as gt
 from pelican.services.graphite.service import GraphiteService
 
 
@@ -28,34 +30,34 @@ class BindingsService:
         self._channels.publish(data, "events")
 
     def _emit_binding_created_event(self, binding: m.Binding) -> None:
-        binding = ev.Binding.map(binding)
-        data = ev.BindingCreatedEventData(
-            binding=binding,
+        mapped_binding = ev.Binding.map(binding)
+        created_event_data = ev.BindingCreatedEventData(
+            binding=mapped_binding,
         )
-        event = ev.BindingCreatedEvent(
-            data=data,
+        created_event = ev.BindingCreatedEvent(
+            data=created_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(created_event)
 
     def _emit_binding_updated_event(self, binding: m.Binding) -> None:
-        binding = ev.Binding.map(binding)
-        data = ev.BindingUpdatedEventData(
-            binding=binding,
+        mapped_binding = ev.Binding.map(binding)
+        updated_event_data = ev.BindingUpdatedEventData(
+            binding=mapped_binding,
         )
-        event = ev.BindingUpdatedEvent(
-            data=data,
+        updated_event = ev.BindingUpdatedEvent(
+            data=updated_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(updated_event)
 
     def _emit_binding_deleted_event(self, binding: m.Binding) -> None:
-        binding = ev.Binding.map(binding)
-        data = ev.BindingDeletedEventData(
-            binding=binding,
+        mapped_binding = ev.Binding.map(binding)
+        deleted_event_data = ev.BindingDeletedEventData(
+            binding=mapped_binding,
         )
-        event = ev.BindingDeletedEvent(
-            data=data,
+        deleted_event = ev.BindingDeletedEvent(
+            data=deleted_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(deleted_event)
 
     @contextmanager
     def _handle_errors(self) -> Generator[None]:
@@ -74,7 +76,6 @@ class BindingsService:
 
     async def count(self, request: m.CountRequest) -> m.CountResponse:
         """Count bindings."""
-
         where = request.where
 
         with self._handle_errors():
@@ -88,7 +89,6 @@ class BindingsService:
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List all bindings."""
-
         limit = request.limit
         offset = request.offset
         where = request.where
@@ -101,7 +101,7 @@ class BindingsService:
                 skip=offset,
                 where=where,
                 include=include,
-                order=order,
+                order=list(order) if isinstance(order, Sequence) else order,
             )
 
         return m.ListResponse(
@@ -110,7 +110,6 @@ class BindingsService:
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get binding."""
-
         where = request.where
         include = request.include
 
@@ -126,7 +125,6 @@ class BindingsService:
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create binding."""
-
         data = request.data
         include = request.include
 
@@ -134,7 +132,7 @@ class BindingsService:
 
         with self._handle_errors():
             binding = await self._graphite.binding.create(
-                data=data,
+                data=cast("gt.BindingCreateInput", data),
                 include=include,
             )
 
@@ -146,7 +144,6 @@ class BindingsService:
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update binding."""
-
         data = request.data
         where = request.where
         include = request.include
@@ -156,7 +153,7 @@ class BindingsService:
 
         with self._handle_errors():
             binding = await self._graphite.binding.update(
-                data=data,
+                data=cast("gt.BindingUpdateInput", data),
                 where=where,
                 include=include,
             )
@@ -174,7 +171,6 @@ class BindingsService:
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete binding."""
-
         where = request.where
         include = request.include
 

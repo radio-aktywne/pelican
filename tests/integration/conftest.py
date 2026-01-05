@@ -18,21 +18,19 @@ from tests.utils.waiting.waiter import Waiter
 
 @pytest.fixture(scope="session")
 def config() -> Config:
-    """Loaded configuration."""
-
+    """Build configuration."""
     return ConfigBuilder().build()
 
 
 @pytest.fixture(scope="session")
 def app(config: Config) -> Litestar:
-    """Reusable application."""
-
+    """Build application."""
     return AppBuilder(config).build()
 
 
 @pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def graphite() -> AsyncGenerator[AsyncDockerContainer]:
-    """Graphite container."""
+    """Run graphite container."""
 
     async def _check() -> None:
         async with Prisma(
@@ -40,11 +38,8 @@ async def graphite() -> AsyncGenerator[AsyncDockerContainer]:
         ):
             return
 
-    container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/databases/graphite:latest",
-        network="host",
-        privileged=True,
-    )
+    container = AsyncDockerContainer("ghcr.io/radio-aktywne/databases/graphite:latest")
+    container = container.with_kwargs(network="host", privileged=True)
 
     waiter = Waiter(
         condition=CallableCondition(_check),
@@ -58,17 +53,15 @@ async def graphite() -> AsyncGenerator[AsyncDockerContainer]:
 
 @pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def minium() -> AsyncGenerator[AsyncDockerContainer]:
-    """Minium container."""
+    """Run minium container."""
 
     async def _check() -> None:
         async with AsyncClient(base_url="http://localhost:10210") as client:
             response = await client.get("/minio/health/ready")
             response.raise_for_status()
 
-    container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/databases/minium:latest",
-        network="host",
-    )
+    container = AsyncDockerContainer("ghcr.io/radio-aktywne/databases/minium:latest")
+    container = container.with_kwargs(network="host")
 
     waiter = Waiter(
         condition=CallableCondition(_check),
@@ -84,7 +77,6 @@ async def minium() -> AsyncGenerator[AsyncDockerContainer]:
 async def client(
     app: Litestar, graphite: AsyncDockerContainer, minium: AsyncDockerContainer
 ) -> AsyncGenerator[AsyncTestClient]:
-    """Reusable test client."""
-
+    """Build test client."""
     async with AsyncTestClient(app=app) as client:
         yield client
