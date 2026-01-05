@@ -1,7 +1,7 @@
 {
   inputs = {
     nixpkgs = {
-      url = "github:NixOS/nixpkgs/nixos-24.11";
+      url = "github:NixOS/nixpkgs/nixos-25.05";
     };
 
     flake-parts = {
@@ -36,15 +36,16 @@
         system,
         ...
       }: let
+        nix = pkgs.nix;
         node = pkgs.nodejs;
-        python = pkgs.python312;
+        python = pkgs.python313;
         nil = pkgs.nil;
         task = pkgs.go-task;
         coreutils = pkgs.coreutils;
         trunk = pkgs.trunk-io;
-        poetry = pkgs.poetry;
+        uv = pkgs.uv;
         cacert = pkgs.cacert;
-        copier = pkgs.copier;
+        copier = pkgs.python313.withPackages (ps: [ps.copier]);
         openssl = pkgs.openssl;
         usql = pkgs.usql;
         mc = pkgs.minio-client;
@@ -74,13 +75,14 @@
             name = "dev";
 
             packages = [
+              nix
               node
               python
               nil
               task
               coreutils
               trunk
-              poetry
+              uv
               cacert
               copier
               openssl
@@ -89,27 +91,15 @@
               s5cmd
             ];
 
-            EXTRAPYTHONPATH = "${python}/${python.sitePackages}";
+            # Remove in the future: https://github.com/testcontainers/testcontainers-python/issues/874
+            PYTHONWARNINGS = "ignore::DeprecationWarning:testcontainers";
+
+            UV_PYTHON = python;
+            UV_PYTHON_PREFERENCE = "only-system";
 
             shellHook = ''
               export TMPDIR=/tmp
               export PRISMA_DB_URL="postgres://user:''${PELICAN__GRAPHITE__SQL__PASSWORD:-password}@''${PELICAN__GRAPHITE__SQL__HOST:-localhost}:''${PELICAN__GRAPHITE__SQL__PORT:-10220}/database"
-            '';
-          };
-
-          package = pkgs.mkShell {
-            name = "package";
-
-            packages = [
-              python
-              task
-              coreutils
-              poetry
-              cacert
-            ];
-
-            shellHook = ''
-              export TMPDIR=/tmp
             '';
           };
 
@@ -119,29 +109,16 @@
             packages = [
               node
               python
-              poetry
+              uv
               cacert
               openssl
               tini
               su-exec
             ];
 
-            EXTRAPYTHONPATH = "${python}/${python.sitePackages}";
             LD_LIBRARY_PATH = lib.makeLibraryPath [openssl];
-
-            shellHook = ''
-              export TMPDIR=/tmp
-            '';
-          };
-
-          template = pkgs.mkShell {
-            name = "template";
-
-            packages = [
-              task
-              coreutils
-              copier
-            ];
+            UV_PYTHON = python;
+            UV_PYTHON_PREFERENCE = "only-system";
 
             shellHook = ''
               export TMPDIR=/tmp
@@ -152,11 +129,18 @@
             name = "lint";
 
             packages = [
+              nix
               node
+              python
               task
               coreutils
               trunk
+              uv
+              cacert
             ];
+
+            UV_PYTHON = python;
+            UV_PYTHON_PREFERENCE = "only-system";
 
             shellHook = ''
               export TMPDIR=/tmp
@@ -171,13 +155,18 @@
               python
               task
               coreutils
-              poetry
+              uv
               cacert
               openssl
             ];
 
-            EXTRAPYTHONPATH = "${python}/${python.sitePackages}";
             LD_LIBRARY_PATH = lib.makeLibraryPath [openssl];
+
+            # Remove in the future: https://github.com/testcontainers/testcontainers-python/issues/874
+            PYTHONWARNINGS = "ignore::DeprecationWarning:testcontainers";
+
+            UV_PYTHON = python;
+            UV_PYTHON_PREFERENCE = "only-system";
 
             shellHook = ''
               export TMPDIR=/tmp

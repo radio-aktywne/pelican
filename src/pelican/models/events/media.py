@@ -1,9 +1,12 @@
 from typing import Literal
 from uuid import UUID
 
+from pydantic import Field
+
 from pelican.models.base import SerializableModel
 from pelican.models.events import types as t
 from pelican.services.media import models as mm
+from pelican.utils.time import naiveutcnow
 
 
 class Media(SerializableModel):
@@ -17,8 +20,9 @@ class Media(SerializableModel):
 
     @staticmethod
     def map(media: mm.Media) -> "Media":
+        """Map to internal representation."""
         return Media(
-            id=media.id,
+            id=UUID(media.id),
             name=media.name,
         )
 
@@ -33,9 +37,9 @@ class MediaCreatedEventData(SerializableModel):
 class MediaCreatedEvent(SerializableModel):
     """Event that is emitted when media is created."""
 
-    type: t.TypeFieldType[Literal["media-created"]] = "media-created"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[MediaCreatedEventData]
+    type: t.TypeField[Literal["media-created"]] = "media-created"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[MediaCreatedEventData]
 
 
 class MediaUpdatedEventData(SerializableModel):
@@ -48,9 +52,9 @@ class MediaUpdatedEventData(SerializableModel):
 class MediaUpdatedEvent(SerializableModel):
     """Event that is emitted when media is updated."""
 
-    type: t.TypeFieldType[Literal["media-updated"]] = "media-updated"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[MediaUpdatedEventData]
+    type: t.TypeField[Literal["media-updated"]] = "media-updated"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[MediaUpdatedEventData]
 
 
 class MediaDeletedEventData(SerializableModel):
@@ -63,6 +67,6 @@ class MediaDeletedEventData(SerializableModel):
 class MediaDeletedEvent(SerializableModel):
     """Event that is emitted when media is deleted."""
 
-    type: t.TypeFieldType[Literal["media-deleted"]] = "media-deleted"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[MediaDeletedEventData]
+    type: t.TypeField[Literal["media-deleted"]] = "media-deleted"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[MediaDeletedEventData]

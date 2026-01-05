@@ -1,4 +1,6 @@
-from collections.abc import AsyncIterator
+# pyright: reportIncompatibleVariableOverride=false
+
+from collections.abc import AsyncIterator, Sequence
 from datetime import datetime
 from uuid import UUID
 
@@ -29,10 +31,11 @@ class Binding(SerializableModel):
 
     @staticmethod
     def map(binding: mm.Binding) -> "Binding":
+        """Map to internal representation."""
         return Binding(
-            id=binding.id,
-            playlist_id=binding.playlistId,
-            media_id=binding.mediaId,
+            id=UUID(binding.id),
+            playlist_id=UUID(binding.playlistId),
+            media_id=UUID(binding.mediaId),
             rank=binding.rank,
             playlist=Playlist.map(binding.playlist) if binding.playlist else None,
             media=Media.map(binding.media) if binding.media else None,
@@ -48,13 +51,14 @@ class Playlist(SerializableModel):
     name: str
     """Name of the playlist."""
 
-    bindings: list[Binding] | None
+    bindings: Sequence[Binding] | None
     """Bindings that the playlist belongs to."""
 
     @staticmethod
     def map(playlist: mm.Playlist) -> "Playlist":
+        """Map to internal representation."""
         return Playlist(
-            id=playlist.id,
+            id=UUID(playlist.id),
             name=playlist.name,
             bindings=(
                 [Binding.map(binding) for binding in playlist.bindings]
@@ -73,13 +77,14 @@ class Media(SerializableModel):
     name: str
     """Name of the media."""
 
-    bindings: list[Binding] | None
+    bindings: Sequence[Binding] | None
     """Bindings that the media belongs to."""
 
     @staticmethod
     def map(media: mm.Media) -> "Media":
+        """Map to internal representation."""
         return Media(
-            id=media.id,
+            id=UUID(media.id),
             name=media.name,
             bindings=(
                 [Binding.map(binding) for binding in media.bindings]
@@ -101,23 +106,23 @@ class MediaList(SerializableModel):
     offset: int | None
     """Number of media skipped."""
 
-    media: list[Media]
+    media: Sequence[Media]
     """Media that matched the request."""
 
 
 @serializable
 class MediaWhereInput(mm.MediaWhereInput):
-    pass
+    """Filter to apply to find media."""
 
 
 @serializable
 class MediaWhereUniqueIdInput(mm.MediaWhereUniqueIdInput):
-    pass
+    """Filter to apply to find media by unique ID."""
 
 
 @serializable
 class MediaWhereUniqueNameInput(mm.MediaWhereUniqueNameInput):
-    pass
+    """Filter to apply to find media by unique name."""
 
 
 MediaWhereUniqueInput = MediaWhereUniqueIdInput | MediaWhereUniqueNameInput
@@ -125,17 +130,17 @@ MediaWhereUniqueInput = MediaWhereUniqueIdInput | MediaWhereUniqueNameInput
 
 @serializable
 class MediaInclude(mm.MediaInclude):
-    pass
+    """Relations to include in the response."""
 
 
 @serializable
 class MediaOrderByIdInput(mm.MediaOrderByIdInput):
-    pass
+    """Order by media ID."""
 
 
 @serializable
 class MediaOrderByNameInput(mm.MediaOrderByNameInput):
-    pass
+    """Order by media name."""
 
 
 MediaOrderByInput = MediaOrderByIdInput | MediaOrderByNameInput
@@ -143,12 +148,12 @@ MediaOrderByInput = MediaOrderByIdInput | MediaOrderByNameInput
 
 @serializable
 class MediaCreateInput(mm.MediaCreateInput):
-    pass
+    """Data to create media."""
 
 
 @serializable
 class MediaUpdateInput(mm.MediaUpdateInput):
-    pass
+    """Data to update media."""
 
 
 ListRequestLimit = int | None
@@ -159,7 +164,7 @@ ListRequestWhere = MediaWhereInput | None
 
 ListRequestInclude = MediaInclude | None
 
-ListRequestOrder = MediaOrderByInput | list[MediaOrderByInput] | None
+ListRequestOrder = MediaOrderByInput | Sequence[MediaOrderByInput] | None
 
 ListResponseResults = MediaList
 
@@ -314,8 +319,6 @@ class DeleteRequest:
 class DeleteResponse:
     """Response for deleting media."""
 
-    pass
-
 
 @datamodel
 class UploadRequest:
@@ -334,8 +337,6 @@ class UploadRequest:
 @datamodel
 class UploadResponse:
     """Response for uploading media content."""
-
-    pass
 
 
 @datamodel

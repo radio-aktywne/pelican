@@ -4,6 +4,7 @@ from pelican.api.routes.playlists.controller import Controller
 
 router = Router(
     path="/playlists",
+    tags=["Playlists"],
     route_handlers=[
         Controller,
     ],

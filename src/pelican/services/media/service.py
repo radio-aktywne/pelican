@@ -1,6 +1,6 @@
-import builtins
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from contextlib import contextmanager
+from typing import cast
 
 from litestar.channels import ChannelsPlugin
 
@@ -8,6 +8,7 @@ from pelican.models.events import binding as bev
 from pelican.models.events import media as mev
 from pelican.models.events.event import Event
 from pelican.services.graphite import errors as ge
+from pelican.services.graphite import types as gt
 from pelican.services.graphite.service import GraphiteService
 from pelican.services.media import errors as e
 from pelican.services.media import models as m
@@ -34,54 +35,54 @@ class MediaService:
         self._channels.publish(data, "events")
 
     def _emit_media_created_event(self, media: m.Media) -> None:
-        media = mev.Media.map(media)
-        data = mev.MediaCreatedEventData(
-            media=media,
+        mapped_media = mev.Media.map(media)
+        created_event_data = mev.MediaCreatedEventData(
+            media=mapped_media,
         )
-        event = mev.MediaCreatedEvent(
-            data=data,
+        created_event = mev.MediaCreatedEvent(
+            data=created_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(created_event)
 
     def _emit_media_updated_event(self, media: m.Media) -> None:
-        media = mev.Media.map(media)
-        data = mev.MediaUpdatedEventData(
-            media=media,
+        mapped_media = mev.Media.map(media)
+        updated_event_data = mev.MediaUpdatedEventData(
+            media=mapped_media,
         )
-        event = mev.MediaUpdatedEvent(
-            data=data,
+        updated_event = mev.MediaUpdatedEvent(
+            data=updated_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(updated_event)
 
     def _emit_media_deleted_event(self, media: m.Media) -> None:
-        media = mev.Media.map(media)
-        data = mev.MediaDeletedEventData(
-            media=media,
+        mapped_media = mev.Media.map(media)
+        deleted_event_data = mev.MediaDeletedEventData(
+            media=mapped_media,
         )
-        event = mev.MediaDeletedEvent(
-            data=data,
+        deleted_event = mev.MediaDeletedEvent(
+            data=deleted_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(deleted_event)
 
     def _emit_binding_updated_event(self, binding: m.Binding) -> None:
-        binding = bev.Binding.map(binding)
-        data = bev.BindingUpdatedEventData(
-            binding=binding,
+        mapped_binding = bev.Binding.map(binding)
+        updated_event_data = bev.BindingUpdatedEventData(
+            binding=mapped_binding,
         )
-        event = bev.BindingUpdatedEvent(
-            data=data,
+        updated_event = bev.BindingUpdatedEvent(
+            data=updated_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(updated_event)
 
     def _emit_binding_deleted_event(self, binding: m.Binding) -> None:
-        binding = bev.Binding.map(binding)
-        data = bev.BindingDeletedEventData(
-            binding=binding,
+        mapped_binding = bev.Binding.map(binding)
+        deleted_event_data = bev.BindingDeletedEventData(
+            binding=mapped_binding,
         )
-        event = bev.BindingDeletedEvent(
-            data=data,
+        deleted_event = bev.BindingDeletedEvent(
+            data=deleted_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(deleted_event)
 
     @contextmanager
     def _handle_errors(self) -> Generator[None]:
@@ -96,7 +97,6 @@ class MediaService:
 
     async def count(self, request: m.CountRequest) -> m.CountResponse:
         """Count media."""
-
         where = request.where
 
         with self._handle_errors():
@@ -110,7 +110,6 @@ class MediaService:
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List all media."""
-
         limit = request.limit
         offset = request.offset
         where = request.where
@@ -123,7 +122,7 @@ class MediaService:
                 skip=offset,
                 where=where,
                 include=include,
-                order=order,
+                order=list(order) if isinstance(order, Sequence) else order,
             )
 
         return m.ListResponse(
@@ -132,7 +131,6 @@ class MediaService:
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get media."""
-
         where = request.where
         include = request.include
 
@@ -148,13 +146,12 @@ class MediaService:
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create media."""
-
         data = request.data
         include = request.include
 
         with self._handle_errors():
             media = await self._graphite.media.create(
-                data=data,
+                data=cast("gt.MediaCreateInput", data),
                 include=include,
             )
 
@@ -166,7 +163,7 @@ class MediaService:
 
     async def _update_handle_bindings(
         self, transaction: GraphiteService, old: m.Media, new: m.Media
-    ) -> builtins.list[m.Binding]:
+    ) -> Sequence[m.Binding]:
         bindings = []
 
         if new.id != old.id:
@@ -228,7 +225,6 @@ class MediaService:
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update media."""
-
         data = request.data
         where = request.where
         include = request.include
@@ -245,7 +241,7 @@ class MediaService:
                     )
 
                 new = await transaction.media.update(
-                    data=data,
+                    data=cast("gt.MediaUpdateInput", data),
                     where=where,
                     include=include,
                 )
@@ -268,7 +264,7 @@ class MediaService:
 
     async def _delete_handle_bindings(
         self, transaction: GraphiteService, media: m.Media
-    ) -> builtins.list[m.Binding]:
+    ) -> Sequence[m.Binding]:
         bindings = await transaction.binding.find_many(
             where={
                 "mediaId": media.id,
@@ -297,7 +293,6 @@ class MediaService:
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete media."""
-
         where = request.where
         include = request.include
 
@@ -326,7 +321,6 @@ class MediaService:
 
     async def upload(self, request: m.UploadRequest) -> m.UploadResponse:
         """Upload media content."""
-
         where = request.where
         include = request.include
         content = request.content
@@ -355,7 +349,6 @@ class MediaService:
 
     async def download(self, request: m.DownloadRequest) -> m.DownloadResponse:
         """Download media content."""
-
         where = request.where
         include = request.include
 

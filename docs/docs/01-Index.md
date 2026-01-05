@@ -5,8 +5,9 @@ title: Index
 
 # pelican
 
-Broadcast playlists 💽
+Broadcast playlists service 💽
 
 ## 💡 About
 
-`pelican` is a service for managing playlists of songs.
+`pelican` is a [`Litestar`](https://litestar.dev) service
+for managing playlists of songs.

@@ -1,17 +1,14 @@
 {
-  "version": "0.2.0",
   "configurations": [
     {
-      "name": "pelican",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "pelican",
       "justMyCode": false,
-      "env": {
-        "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}",
-        "PYTHONPATH": "${workspaceFolder}/.venv/lib/python3.12/site-packages:${env:EXTRAPYTHONPATH}",
-        "PELICAN__DEBUG": "true"
-      }
+      "module": "pelican",
+      "name": "pelican",
+      "python": "uv",
+      "pythonArgs": ["run", "python"],
+      "request": "launch",
+      "type": "debugpy"
     }
-  ]
+  ],
+  "version": "0.2.0"
 }

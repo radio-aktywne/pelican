@@ -6,7 +6,7 @@ from pelican.models.events import binding as be
 from pelican.models.events import media as me
 from pelican.models.events import playlist as pe
 
-Event = Annotated[
+type Event = Annotated[
     be.BindingCreatedEvent
     | be.BindingUpdatedEvent
     | be.BindingDeletedEvent
@@ -16,6 +16,6 @@ Event = Annotated[
     | pe.PlaylistCreatedEvent
     | pe.PlaylistUpdatedEvent
     | pe.PlaylistDeletedEvent,
-    Field(..., discriminator="type"),
+    Field(discriminator="type"),
 ]
 ParsableEvent = RootModel[Event]

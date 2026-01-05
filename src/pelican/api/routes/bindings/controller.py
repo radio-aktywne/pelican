@@ -1,11 +1,14 @@
+from collections.abc import Mapping
 from typing import Annotated
 
 from litestar import Controller as BaseController
 from litestar import handlers
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
+from litestar.openapi import ResponseSpec
 from litestar.params import Body, Parameter
 from litestar.response import Response
+from litestar.status_codes import HTTP_204_NO_CONTENT
 
 from pelican.api.exceptions import BadRequestException, NotFoundException
 from pelican.api.routes.bindings import errors as e
@@ -31,7 +34,8 @@ class DependenciesBuilder:
             )
         )
 
-    def build(self) -> dict[str, Provide]:
+    def build(self) -> Mapping[str, Provide]:
+        """Build the dependencies."""
         return {
             "service": Provide(self._build_service),
         }
@@ -45,7 +49,7 @@ class Controller(BaseController):
     @handlers.get(
         summary="List bindings",
     )
-    async def list(
+    async def list(  # noqa: PLR0913
         self,
         service: Service,
         limit: Annotated[
@@ -80,23 +84,28 @@ class Controller(BaseController):
         ] = None,
     ) -> Response[m.ListResponseResults]:
         """List bindings that match the request."""
-
-        where = Validator(m.ListRequestWhere).json(where) if where else None
-        include = Validator(m.ListRequestInclude).json(include) if include else None
-        order = Validator(m.ListRequestOrder).json(order) if order else None
+        parsed_where = (
+            Validator[m.ListRequestWhere].validate_json(where) if where else None
+        )
+        parsed_include = (
+            Validator[m.ListRequestInclude].validate_json(include) if include else None
+        )
+        parsed_order = (
+            Validator[m.ListRequestOrder].validate_json(order) if order else None
+        )
 
         req = m.ListRequest(
             limit=limit,
             offset=offset,
-            where=where,
-            include=include,
-            order=order,
+            where=parsed_where,
+            include=parsed_include,
+            order=parsed_order,
         )
 
         try:
             res = await service.list(req)
         except e.ValidationError as ex:
-            raise BadRequestException(extra=str(ex)) from ex
+            raise BadRequestException from ex
 
         results = res.results
 
@@ -109,7 +118,7 @@ class Controller(BaseController):
     async def get(
         self,
         service: Service,
-        id: Annotated[
+        id: Annotated[  # noqa: A002
             m.GetRequestId,
             Parameter(
                 description="Identifier of the binding to get.",
@@ -123,20 +132,21 @@ class Controller(BaseController):
         ] = None,
     ) -> Response[m.GetResponseBinding]:
         """Get a binding by ID."""
-
-        include = Validator(m.GetRequestInclude).json(include) if include else None
+        parsed_include = (
+            Validator[m.GetRequestInclude].validate_json(include) if include else None
+        )
 
         req = m.GetRequest(
             id=id,
-            include=include,
+            include=parsed_include,
         )
 
         try:
             res = await service.get(req)
         except e.ValidationError as ex:
-            raise BadRequestException(extra=str(ex)) from ex
+            raise BadRequestException from ex
         except e.BindingNotFoundError as ex:
-            raise NotFoundException(extra=str(ex)) from ex
+            raise NotFoundException from ex
 
         binding = res.binding
 
@@ -162,19 +172,22 @@ class Controller(BaseController):
         ] = None,
     ) -> Response[m.CreateResponseBinding]:
         """Create a new binding."""
-
-        data = Validator(m.CreateRequestData).object(data)
-        include = Validator(m.CreateRequestInclude).json(include) if include else None
+        parsed_data = Validator[m.CreateRequestData].validate_object(data)
+        parsed_include = (
+            Validator[m.CreateRequestInclude].validate_json(include)
+            if include
+            else None
+        )
 
         req = m.CreateRequest(
-            data=data,
-            include=include,
+            data=parsed_data,
+            include=parsed_include,
         )
 
         try:
             res = await service.create(req)
         except e.ValidationError as ex:
-            raise BadRequestException(extra=str(ex)) from ex
+            raise BadRequestException from ex
 
         binding = res.binding
 
@@ -187,7 +200,7 @@ class Controller(BaseController):
     async def update(
         self,
         service: Service,
-        id: Annotated[
+        id: Annotated[  # noqa: A002
             m.UpdateRequestId,
             Parameter(
                 description="Identifier of the binding to update.",
@@ -207,22 +220,25 @@ class Controller(BaseController):
         ] = None,
     ) -> Response[m.UpdateResponseBinding]:
         """Update a binding by ID."""
-
-        data = Validator(m.UpdateRequestData).object(data)
-        include = Validator(m.UpdateRequestInclude).json(include) if include else None
+        parsed_data = Validator[m.UpdateRequestData].validate_object(data)
+        parsed_include = (
+            Validator[m.UpdateRequestInclude].validate_json(include)
+            if include
+            else None
+        )
 
         req = m.UpdateRequest(
-            data=data,
+            data=parsed_data,
             id=id,
-            include=include,
+            include=parsed_include,
         )
 
         try:
             res = await service.update(req)
         except e.ValidationError as ex:
-            raise BadRequestException(extra=str(ex)) from ex
+            raise BadRequestException from ex
         except e.BindingNotFoundError as ex:
-            raise NotFoundException(extra=str(ex)) from ex
+            raise NotFoundException from ex
 
         binding = res.binding
 
@@ -231,11 +247,16 @@ class Controller(BaseController):
     @handlers.delete(
         "/{id:uuid}",
         summary="Delete binding",
+        responses={
+            HTTP_204_NO_CONTENT: ResponseSpec(
+                None, description="Request fulfilled, nothing follows"
+            )
+        },
     )
     async def delete(
         self,
         service: Service,
-        id: Annotated[
+        id: Annotated[  # noqa: A002
             m.DeleteRequestId,
             Parameter(
                 description="Identifier of the binding to delete.",
@@ -243,7 +264,6 @@ class Controller(BaseController):
         ],
     ) -> Response[None]:
         """Delete a binding by ID."""
-
         req = m.DeleteRequest(
             id=id,
         )
@@ -251,8 +271,8 @@ class Controller(BaseController):
         try:
             await service.delete(req)
         except e.ValidationError as ex:
-            raise BadRequestException(extra=str(ex)) from ex
+            raise BadRequestException from ex
         except e.BindingNotFoundError as ex:
-            raise NotFoundException(extra=str(ex)) from ex
+            raise NotFoundException from ex
 
         return Response(None)

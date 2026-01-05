@@ -29,7 +29,6 @@ class Service:
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List media."""
-
         limit = request.limit
         offset = request.offset
         where = request.where
@@ -71,13 +70,12 @@ class Service:
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get media."""
-
-        id = request.id
+        media_id = request.id
         include = request.include
 
         req = mm.GetRequest(
             where={
-                "id": str(id),
+                "id": str(media_id),
             },
             include=include,
         )
@@ -88,7 +86,7 @@ class Service:
         media = res.media
 
         if media is None:
-            raise e.MediaNotFoundError(id)
+            raise e.MediaNotFoundError(media_id)
 
         media = m.Media.map(media)
         return m.GetResponse(
@@ -97,7 +95,6 @@ class Service:
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create media."""
-
         data = request.data
         include = request.include
 
@@ -118,15 +115,14 @@ class Service:
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update media."""
-
         data = request.data
-        id = request.id
+        media_id = request.id
         include = request.include
 
         req = mm.UpdateRequest(
             data=data,
             where={
-                "id": str(id),
+                "id": str(media_id),
             },
             include=include,
         )
@@ -137,7 +133,7 @@ class Service:
         media = res.media
 
         if media is None:
-            raise e.MediaNotFoundError(id)
+            raise e.MediaNotFoundError(media_id)
 
         media = m.Media.map(media)
         return m.UpdateResponse(
@@ -146,12 +142,11 @@ class Service:
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete media."""
-
-        id = request.id
+        media_id = request.id
 
         req = mm.DeleteRequest(
             where={
-                "id": str(id),
+                "id": str(media_id),
             },
             include=None,
         )
@@ -162,24 +157,23 @@ class Service:
         media = res.media
 
         if media is None:
-            raise e.MediaNotFoundError(id)
+            raise e.MediaNotFoundError(media_id)
 
         return m.DeleteResponse()
 
     async def upload(self, request: m.UploadRequest) -> m.UploadResponse:
         """Upload media content."""
-
-        id = request.id
-        type = request.type
+        media_id = request.id
+        content_type = request.type
         data = request.data
 
         content = mm.UploadContent(
-            type=type,
+            type=content_type,
             data=data,
         )
         req = mm.UploadRequest(
             where={
-                "id": str(id),
+                "id": str(media_id),
             },
             include=None,
             content=content,
@@ -191,18 +185,17 @@ class Service:
         media = res.media
 
         if media is None:
-            raise e.MediaNotFoundError(id)
+            raise e.MediaNotFoundError(media_id)
 
         return m.UploadResponse()
 
     async def download(self, request: m.DownloadRequest) -> m.DownloadResponse:
         """Download media content."""
-
-        id = request.id
+        media_id = request.id
 
         req = mm.DownloadRequest(
             where={
-                "id": str(id),
+                "id": str(media_id),
             },
             include=None,
         )
@@ -213,21 +206,21 @@ class Service:
         media = res.media
 
         if media is None:
-            raise e.MediaNotFoundError(id)
+            raise e.MediaNotFoundError(media_id)
 
         content = res.content
 
         if content is None:
-            raise e.ContentNotFoundError(id)
+            raise e.ContentNotFoundError(media_id)
 
-        type = content.type
+        content_type = content.type
         size = content.size
         tag = content.tag
         modified = content.modified
         data = content.data
 
         return m.DownloadResponse(
-            type=type,
+            type=content_type,
             size=size,
             tag=tag,
             modified=modified,
@@ -238,12 +231,11 @@ class Service:
         self, request: m.HeadDownloadRequest
     ) -> m.HeadDownloadResponse:
         """Download media content headers."""
-
-        id = request.id
+        media_id = request.id
 
         req = mm.DownloadRequest(
             where={
-                "id": str(id),
+                "id": str(media_id),
             },
             include=None,
         )
@@ -254,20 +246,20 @@ class Service:
         media = res.media
 
         if media is None:
-            raise e.MediaNotFoundError(id)
+            raise e.MediaNotFoundError(media_id)
 
         content = res.content
 
         if content is None:
-            raise e.ContentNotFoundError(id)
+            raise e.ContentNotFoundError(media_id)
 
-        type = content.type
+        content_type = content.type
         size = content.size
         tag = content.tag
         modified = content.modified
 
         return m.HeadDownloadResponse(
-            type=type,
+            type=content_type,
             size=size,
             tag=tag,
             modified=modified,

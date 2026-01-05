@@ -1,3 +1,6 @@
+# ruff: noqa: D101, SLF001
+
+from collections.abc import Sequence
 from typing import TypedDict
 
 from prisma import enums, fields, models, types  # noqa: F401
@@ -51,8 +54,8 @@ BytesFilter = TypedDict(
     "BytesFilter",
     {
         "equals": fields.Base64,
-        "in": list[fields.Base64],
-        "not_in": list[fields.Base64],
+        "in": Sequence[fields.Base64],
+        "not_in": Sequence[fields.Base64],
         "not": fields.Base64 | types.BytesFilter,
     },
     total=False,
@@ -109,7 +112,7 @@ types.DecimalWithAggregatesFilter = DecimalWithAggregatesFilter
 
 
 class _BytesListFilterEqualsInput(TypedDict):
-    equals: list[fields.Base64] | None
+    equals: Sequence[fields.Base64] | None
 
 
 types._BytesListFilterEqualsInput = _BytesListFilterEqualsInput
@@ -123,34 +126,34 @@ types._BytesListFilterHasInput = _BytesListFilterHasInput
 
 
 class _BytesListFilterHasEveryInput(TypedDict):
-    has_every: list[fields.Base64]
+    has_every: Sequence[fields.Base64]
 
 
 types._BytesListFilterHasEveryInput = _BytesListFilterHasEveryInput
 
 
 class _BytesListFilterHasSomeInput(TypedDict):
-    has_some: list[fields.Base64]
+    has_some: Sequence[fields.Base64]
 
 
 types._BytesListFilterHasSomeInput = _BytesListFilterHasSomeInput
 
 
 class _BytesListUpdateSet(TypedDict):
-    set: list[fields.Base64]
+    set: Sequence[fields.Base64]
 
 
 types._BytesListUpdateSet = _BytesListUpdateSet
 
 
-BytesListUpdate = list[fields.Base64] | types._BytesListUpdateSet
+BytesListUpdate = Sequence[fields.Base64] | types._BytesListUpdateSet
 
 
 types.BytesListUpdate = BytesListUpdate
 
 
 class _JsonListFilterEqualsInput(TypedDict):
-    equals: list[fields.Json] | None
+    equals: Sequence[fields.Json] | None
 
 
 types._JsonListFilterEqualsInput = _JsonListFilterEqualsInput
@@ -164,27 +167,27 @@ types._JsonListFilterHasInput = _JsonListFilterHasInput
 
 
 class _JsonListFilterHasEveryInput(TypedDict):
-    has_every: list[fields.Json]
+    has_every: Sequence[fields.Json]
 
 
 types._JsonListFilterHasEveryInput = _JsonListFilterHasEveryInput
 
 
 class _JsonListFilterHasSomeInput(TypedDict):
-    has_some: list[fields.Json]
+    has_some: Sequence[fields.Json]
 
 
 types._JsonListFilterHasSomeInput = _JsonListFilterHasSomeInput
 
 
 class _JsonListUpdateSet(TypedDict):
-    set: list[fields.Json]
+    set: Sequence[fields.Json]
 
 
 types._JsonListUpdateSet = _JsonListUpdateSet
 
 
-JsonListUpdate = list[fields.Json] | types._JsonListUpdateSet
+JsonListUpdate = Sequence[fields.Json] | types._JsonListUpdateSet
 
 
 class MediaOptionalCreateInput(TypedDict, total=False):
@@ -206,9 +209,9 @@ types.MediaCreateNestedWithoutRelationsInput = MediaCreateNestedWithoutRelations
 class MediaCreateManyNestedWithoutRelationsInput(TypedDict, total=False):
     create: (
         types.MediaCreateWithoutRelationsInput
-        | list[types.MediaCreateWithoutRelationsInput]
+        | Sequence[types.MediaCreateWithoutRelationsInput]
     )
-    connect: types.MediaWhereUniqueInput | list[types.MediaWhereUniqueInput]
+    connect: types.MediaWhereUniqueInput | Sequence[types.MediaWhereUniqueInput]
 
 
 types.MediaCreateManyNestedWithoutRelationsInput = (
@@ -231,11 +234,11 @@ types.MediaUpdateInput = MediaUpdateInput
 
 
 class MediaUpdateManyWithoutRelationsInput(TypedDict, total=False):
-    create: list[types.MediaCreateWithoutRelationsInput]
-    connect: list[types.MediaWhereUniqueInput]
-    set: list[types.MediaWhereUniqueInput]
-    disconnect: list[types.MediaWhereUniqueInput]
-    delete: list[types.MediaWhereUniqueInput]
+    create: Sequence[types.MediaCreateWithoutRelationsInput]
+    connect: Sequence[types.MediaWhereUniqueInput]
+    set: Sequence[types.MediaWhereUniqueInput]
+    disconnect: Sequence[types.MediaWhereUniqueInput]
+    delete: Sequence[types.MediaWhereUniqueInput]
 
 
 types.MediaUpdateManyWithoutRelationsInput = MediaUpdateManyWithoutRelationsInput
@@ -322,10 +325,10 @@ types.MediaArgsFromMedia = MediaArgsFromMedia
 class FindManyMediaArgsFromMedia(TypedDict, total=False):
     take: int
     skip: int
-    order_by: types.MediaOrderByInput | list[types.MediaOrderByInput]
+    order_by: types.MediaOrderByInput | Sequence[types.MediaOrderByInput]
     where: types.MediaWhereInput
     cursor: types.MediaWhereUniqueInput
-    distinct: list[types.MediaScalarFieldKeys]
+    distinct: Sequence[types.MediaScalarFieldKeys]
     include: types.MediaIncludeFromMedia
 
 
@@ -349,10 +352,10 @@ types.PlaylistArgsFromMedia = PlaylistArgsFromMedia
 class FindManyPlaylistArgsFromMedia(TypedDict, total=False):
     take: int
     skip: int
-    order_by: types.PlaylistOrderByInput | list[types.PlaylistOrderByInput]
+    order_by: types.PlaylistOrderByInput | Sequence[types.PlaylistOrderByInput]
     where: types.PlaylistWhereInput
     cursor: types.PlaylistWhereUniqueInput
-    distinct: list[types.PlaylistScalarFieldKeys]
+    distinct: Sequence[types.PlaylistScalarFieldKeys]
     include: types.PlaylistIncludeFromPlaylist
 
 
@@ -377,10 +380,10 @@ types.BindingArgsFromMedia = BindingArgsFromMedia
 class FindManyBindingArgsFromMedia(TypedDict, total=False):
     take: int
     skip: int
-    order_by: types.BindingOrderByInput | list[types.BindingOrderByInput]
+    order_by: types.BindingOrderByInput | Sequence[types.BindingOrderByInput]
     where: types.BindingWhereInput
     cursor: types.BindingWhereUniqueInput
-    distinct: list[types.BindingScalarFieldKeys]
+    distinct: Sequence[types.BindingScalarFieldKeys]
     include: types.BindingIncludeFromBinding
 
 
@@ -391,9 +394,9 @@ class MediaWhereInput(TypedDict, total=False):
     id: str | types.StringFilter
     name: str | types.StringFilter
     bindings: types.BindingListRelationFilter
-    AND: list[types.MediaWhereInput]
-    OR: list[types.MediaWhereInput]
-    NOT: list[types.MediaWhereInput]
+    AND: Sequence[types.MediaWhereInput]
+    OR: Sequence[types.MediaWhereInput]
+    NOT: Sequence[types.MediaWhereInput]
 
 
 types.MediaWhereInput = MediaWhereInput
@@ -402,9 +405,9 @@ types.MediaWhereInput = MediaWhereInput
 class MediaScalarWhereWithAggregatesInput(TypedDict, total=False):
     id: str | types.StringWithAggregatesFilter
     name: str | types.StringWithAggregatesFilter
-    AND: list[types.MediaScalarWhereWithAggregatesInput]
-    OR: list[types.MediaScalarWhereWithAggregatesInput]
-    NOT: list[types.MediaScalarWhereWithAggregatesInput]
+    AND: Sequence[types.MediaScalarWhereWithAggregatesInput]
+    OR: Sequence[types.MediaScalarWhereWithAggregatesInput]
+    NOT: Sequence[types.MediaScalarWhereWithAggregatesInput]
 
 
 types.MediaScalarWhereWithAggregatesInput = MediaScalarWhereWithAggregatesInput
@@ -444,9 +447,9 @@ types.PlaylistCreateNestedWithoutRelationsInput = (
 class PlaylistCreateManyNestedWithoutRelationsInput(TypedDict, total=False):
     create: (
         types.PlaylistCreateWithoutRelationsInput
-        | list[types.PlaylistCreateWithoutRelationsInput]
+        | Sequence[types.PlaylistCreateWithoutRelationsInput]
     )
-    connect: types.PlaylistWhereUniqueInput | list[types.PlaylistWhereUniqueInput]
+    connect: types.PlaylistWhereUniqueInput | Sequence[types.PlaylistWhereUniqueInput]
 
 
 types.PlaylistCreateManyNestedWithoutRelationsInput = (
@@ -469,11 +472,11 @@ types.PlaylistUpdateInput = PlaylistUpdateInput
 
 
 class PlaylistUpdateManyWithoutRelationsInput(TypedDict, total=False):
-    create: list[types.PlaylistCreateWithoutRelationsInput]
-    connect: list[types.PlaylistWhereUniqueInput]
-    set: list[types.PlaylistWhereUniqueInput]
-    disconnect: list[types.PlaylistWhereUniqueInput]
-    delete: list[types.PlaylistWhereUniqueInput]
+    create: Sequence[types.PlaylistCreateWithoutRelationsInput]
+    connect: Sequence[types.PlaylistWhereUniqueInput]
+    set: Sequence[types.PlaylistWhereUniqueInput]
+    disconnect: Sequence[types.PlaylistWhereUniqueInput]
+    delete: Sequence[types.PlaylistWhereUniqueInput]
 
 
 types.PlaylistUpdateManyWithoutRelationsInput = PlaylistUpdateManyWithoutRelationsInput
@@ -562,10 +565,10 @@ types.MediaArgsFromPlaylist = MediaArgsFromPlaylist
 class FindManyMediaArgsFromPlaylist(TypedDict, total=False):
     take: int
     skip: int
-    order_by: types.MediaOrderByInput | list[types.MediaOrderByInput]
+    order_by: types.MediaOrderByInput | Sequence[types.MediaOrderByInput]
     where: types.MediaWhereInput
     cursor: types.MediaWhereUniqueInput
-    distinct: list[types.MediaScalarFieldKeys]
+    distinct: Sequence[types.MediaScalarFieldKeys]
     include: types.MediaIncludeFromMedia
 
 
@@ -589,10 +592,10 @@ types.PlaylistArgsFromPlaylist = PlaylistArgsFromPlaylist
 class FindManyPlaylistArgsFromPlaylist(TypedDict, total=False):
     take: int
     skip: int
-    order_by: types.PlaylistOrderByInput | list[types.PlaylistOrderByInput]
+    order_by: types.PlaylistOrderByInput | Sequence[types.PlaylistOrderByInput]
     where: types.PlaylistWhereInput
     cursor: types.PlaylistWhereUniqueInput
-    distinct: list[types.PlaylistScalarFieldKeys]
+    distinct: Sequence[types.PlaylistScalarFieldKeys]
     include: types.PlaylistIncludeFromPlaylist
 
 
@@ -617,10 +620,10 @@ types.BindingArgsFromPlaylist = BindingArgsFromPlaylist
 class FindManyBindingArgsFromPlaylist(TypedDict, total=False):
     take: int
     skip: int
-    order_by: types.BindingOrderByInput | list[types.BindingOrderByInput]
+    order_by: types.BindingOrderByInput | Sequence[types.BindingOrderByInput]
     where: types.BindingWhereInput
     cursor: types.BindingWhereUniqueInput
-    distinct: list[types.BindingScalarFieldKeys]
+    distinct: Sequence[types.BindingScalarFieldKeys]
     include: types.BindingIncludeFromBinding
 
 
@@ -631,9 +634,9 @@ class PlaylistWhereInput(TypedDict, total=False):
     id: str | types.StringFilter
     name: str | types.StringFilter
     bindings: types.BindingListRelationFilter
-    AND: list[types.PlaylistWhereInput]
-    OR: list[types.PlaylistWhereInput]
-    NOT: list[types.PlaylistWhereInput]
+    AND: Sequence[types.PlaylistWhereInput]
+    OR: Sequence[types.PlaylistWhereInput]
+    NOT: Sequence[types.PlaylistWhereInput]
 
 
 types.PlaylistWhereInput = PlaylistWhereInput
@@ -642,9 +645,9 @@ types.PlaylistWhereInput = PlaylistWhereInput
 class PlaylistScalarWhereWithAggregatesInput(TypedDict, total=False):
     id: str | types.StringWithAggregatesFilter
     name: str | types.StringWithAggregatesFilter
-    AND: list[types.PlaylistScalarWhereWithAggregatesInput]
-    OR: list[types.PlaylistScalarWhereWithAggregatesInput]
-    NOT: list[types.PlaylistScalarWhereWithAggregatesInput]
+    AND: Sequence[types.PlaylistScalarWhereWithAggregatesInput]
+    OR: Sequence[types.PlaylistScalarWhereWithAggregatesInput]
+    NOT: Sequence[types.PlaylistScalarWhereWithAggregatesInput]
 
 
 types.PlaylistScalarWhereWithAggregatesInput = PlaylistScalarWhereWithAggregatesInput
@@ -687,9 +690,9 @@ types.BindingCreateNestedWithoutRelationsInput = (
 class BindingCreateManyNestedWithoutRelationsInput(TypedDict, total=False):
     create: (
         types.BindingCreateWithoutRelationsInput
-        | list[types.BindingCreateWithoutRelationsInput]
+        | Sequence[types.BindingCreateWithoutRelationsInput]
     )
-    connect: types.BindingWhereUniqueInput | list[types.BindingWhereUniqueInput]
+    connect: types.BindingWhereUniqueInput | Sequence[types.BindingWhereUniqueInput]
 
 
 types.BindingCreateManyNestedWithoutRelationsInput = (
@@ -713,11 +716,11 @@ types.BindingUpdateInput = BindingUpdateInput
 
 
 class BindingUpdateManyWithoutRelationsInput(TypedDict, total=False):
-    create: list[types.BindingCreateWithoutRelationsInput]
-    connect: list[types.BindingWhereUniqueInput]
-    set: list[types.BindingWhereUniqueInput]
-    disconnect: list[types.BindingWhereUniqueInput]
-    delete: list[types.BindingWhereUniqueInput]
+    create: Sequence[types.BindingCreateWithoutRelationsInput]
+    connect: Sequence[types.BindingWhereUniqueInput]
+    set: Sequence[types.BindingWhereUniqueInput]
+    disconnect: Sequence[types.BindingWhereUniqueInput]
+    delete: Sequence[types.BindingWhereUniqueInput]
 
 
 types.BindingUpdateManyWithoutRelationsInput = BindingUpdateManyWithoutRelationsInput
@@ -824,10 +827,10 @@ types.MediaArgsFromBinding = MediaArgsFromBinding
 class FindManyMediaArgsFromBinding(TypedDict, total=False):
     take: int
     skip: int
-    order_by: types.MediaOrderByInput | list[types.MediaOrderByInput]
+    order_by: types.MediaOrderByInput | Sequence[types.MediaOrderByInput]
     where: types.MediaWhereInput
     cursor: types.MediaWhereUniqueInput
-    distinct: list[types.MediaScalarFieldKeys]
+    distinct: Sequence[types.MediaScalarFieldKeys]
     include: types.MediaIncludeFromMedia
 
 
@@ -851,10 +854,10 @@ types.PlaylistArgsFromBinding = PlaylistArgsFromBinding
 class FindManyPlaylistArgsFromBinding(TypedDict, total=False):
     take: int
     skip: int
-    order_by: types.PlaylistOrderByInput | list[types.PlaylistOrderByInput]
+    order_by: types.PlaylistOrderByInput | Sequence[types.PlaylistOrderByInput]
     where: types.PlaylistWhereInput
     cursor: types.PlaylistWhereUniqueInput
-    distinct: list[types.PlaylistScalarFieldKeys]
+    distinct: Sequence[types.PlaylistScalarFieldKeys]
     include: types.PlaylistIncludeFromPlaylist
 
 
@@ -879,10 +882,10 @@ types.BindingArgsFromBinding = BindingArgsFromBinding
 class FindManyBindingArgsFromBinding(TypedDict, total=False):
     take: int
     skip: int
-    order_by: types.BindingOrderByInput | list[types.BindingOrderByInput]
+    order_by: types.BindingOrderByInput | Sequence[types.BindingOrderByInput]
     where: types.BindingWhereInput
     cursor: types.BindingWhereUniqueInput
-    distinct: list[types.BindingScalarFieldKeys]
+    distinct: Sequence[types.BindingScalarFieldKeys]
     include: types.BindingIncludeFromBinding
 
 
@@ -896,9 +899,9 @@ class BindingWhereInput(TypedDict, total=False):
     rank: str | types.StringFilter
     playlist: types.PlaylistRelationFilter
     media: types.MediaRelationFilter
-    AND: list[types.BindingWhereInput]
-    OR: list[types.BindingWhereInput]
-    NOT: list[types.BindingWhereInput]
+    AND: Sequence[types.BindingWhereInput]
+    OR: Sequence[types.BindingWhereInput]
+    NOT: Sequence[types.BindingWhereInput]
 
 
 types.BindingWhereInput = BindingWhereInput
@@ -909,9 +912,9 @@ class BindingScalarWhereWithAggregatesInput(TypedDict, total=False):
     playlistId: str | types.StringWithAggregatesFilter
     mediaId: str | types.StringWithAggregatesFilter
     rank: str | types.StringWithAggregatesFilter
-    AND: list[types.BindingScalarWhereWithAggregatesInput]
-    OR: list[types.BindingScalarWhereWithAggregatesInput]
-    NOT: list[types.BindingScalarWhereWithAggregatesInput]
+    AND: Sequence[types.BindingScalarWhereWithAggregatesInput]
+    OR: Sequence[types.BindingScalarWhereWithAggregatesInput]
+    NOT: Sequence[types.BindingScalarWhereWithAggregatesInput]
 
 
 types.BindingScalarWhereWithAggregatesInput = BindingScalarWhereWithAggregatesInput

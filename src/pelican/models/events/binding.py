@@ -1,9 +1,12 @@
 from typing import Literal
 from uuid import UUID
 
+from pydantic import Field
+
 from pelican.models.base import SerializableModel
 from pelican.models.events import types as t
 from pelican.services.bindings import models as bm
+from pelican.utils.time import naiveutcnow
 
 
 class Binding(SerializableModel):
@@ -23,10 +26,11 @@ class Binding(SerializableModel):
 
     @staticmethod
     def map(binding: bm.Binding) -> "Binding":
+        """Map to internal representation."""
         return Binding(
-            id=binding.id,
-            playlist_id=binding.playlistId,
-            media_id=binding.mediaId,
+            id=UUID(binding.id),
+            playlist_id=UUID(binding.playlistId),
+            media_id=UUID(binding.mediaId),
             rank=binding.rank,
         )
 
@@ -41,9 +45,9 @@ class BindingCreatedEventData(SerializableModel):
 class BindingCreatedEvent(SerializableModel):
     """Event that is emitted when binding is created."""
 
-    type: t.TypeFieldType[Literal["binding-created"]] = "binding-created"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[BindingCreatedEventData]
+    type: t.TypeField[Literal["binding-created"]] = "binding-created"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[BindingCreatedEventData]
 
 
 class BindingUpdatedEventData(SerializableModel):
@@ -56,9 +60,9 @@ class BindingUpdatedEventData(SerializableModel):
 class BindingUpdatedEvent(SerializableModel):
     """Event that is emitted when binding is updated."""
 
-    type: t.TypeFieldType[Literal["binding-updated"]] = "binding-updated"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[BindingUpdatedEventData]
+    type: t.TypeField[Literal["binding-updated"]] = "binding-updated"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[BindingUpdatedEventData]
 
 
 class BindingDeletedEventData(SerializableModel):
@@ -71,6 +75,6 @@ class BindingDeletedEventData(SerializableModel):
 class BindingDeletedEvent(SerializableModel):
     """Event that is emitted when binding is deleted."""
 
-    type: t.TypeFieldType[Literal["binding-deleted"]] = "binding-deleted"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[BindingDeletedEventData]
+    type: t.TypeField[Literal["binding-deleted"]] = "binding-deleted"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[BindingDeletedEventData]

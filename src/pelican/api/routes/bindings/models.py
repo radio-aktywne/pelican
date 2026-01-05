@@ -1,3 +1,6 @@
+# pyright: reportIncompatibleVariableOverride=false
+
+from collections.abc import Sequence
 from uuid import UUID
 
 from pelican.models.base import SerializableModel, datamodel, serializable
@@ -13,13 +16,14 @@ class Playlist(SerializableModel):
     name: str
     """Name of the playlist."""
 
-    bindings: list["Binding"] | None
+    bindings: Sequence["Binding"] | None
     """Bindings that the playlist belongs to."""
 
     @staticmethod
     def map(playlist: bm.Playlist) -> "Playlist":
+        """Map to internal representation."""
         return Playlist(
-            id=playlist.id,
+            id=UUID(playlist.id),
             name=playlist.name,
             bindings=(
                 [Binding.map(binding) for binding in playlist.bindings]
@@ -38,13 +42,14 @@ class Media(SerializableModel):
     name: str
     """Name of the media."""
 
-    bindings: list["Binding"] | None
+    bindings: Sequence["Binding"] | None
     """Bindings that the media belongs to."""
 
     @staticmethod
     def map(media: bm.Media) -> "Media":
+        """Map to internal representation."""
         return Media(
-            id=media.id,
+            id=UUID(media.id),
             name=media.name,
             bindings=(
                 [Binding.map(binding) for binding in media.bindings]
@@ -77,10 +82,11 @@ class Binding(SerializableModel):
 
     @staticmethod
     def map(binding: bm.Binding) -> "Binding":
+        """Map to internal representation."""
         return Binding(
-            id=binding.id,
-            playlist_id=binding.playlistId,
-            media_id=binding.mediaId,
+            id=UUID(binding.id),
+            playlist_id=UUID(binding.playlistId),
+            media_id=UUID(binding.mediaId),
             rank=binding.rank,
             playlist=Playlist.map(binding.playlist) if binding.playlist else None,
             media=Media.map(binding.media) if binding.media else None,
@@ -99,23 +105,23 @@ class BindingList(SerializableModel):
     offset: int | None
     """Number of bindings skipped."""
 
-    bindings: list[Binding]
+    bindings: Sequence[Binding]
     """Bindings that matched the request."""
 
 
 @serializable
 class BindingWhereInput(bm.BindingWhereInput):
-    pass
+    """Filter to apply to find bindings."""
 
 
 @serializable
 class BindingWhereUniqueIdInput(bm.BindingWhereUniqueIdInput):
-    pass
+    """Filter to apply to find a binding by unique ID."""
 
 
 @serializable
 class BindingWhereUniquePlaylistIdRankInput(bm.BindingWhereUniquePlaylistIdRankInput):
-    pass
+    """Filter to apply to find a binding by unique playlist ID and rank."""
 
 
 BindingWhereUniqueInput = (
@@ -125,27 +131,27 @@ BindingWhereUniqueInput = (
 
 @serializable
 class BindingInclude(bm.BindingInclude):
-    pass
+    """Relations to include in the response."""
 
 
 @serializable
 class BindingOrderByIdInput(bm.BindingOrderByIdInput):
-    pass
+    """Order by binding ID."""
 
 
 @serializable
 class BindingOrderByPlaylistIdInput(bm.BindingOrderByPlaylistIdInput):
-    pass
+    """Order by playlist ID."""
 
 
 @serializable
 class BindingOrderByMediaIdInput(bm.BindingOrderByMediaIdInput):
-    pass
+    """Order by media ID."""
 
 
 @serializable
 class BindingOrderByRankInput(bm.BindingOrderByRankInput):
-    pass
+    """Order by rank."""
 
 
 BindingOrderByInput = (
@@ -158,12 +164,12 @@ BindingOrderByInput = (
 
 @serializable
 class BindingCreateInput(bm.BindingCreateInput):
-    pass
+    """Data to create a binding."""
 
 
 @serializable
 class BindingUpdateInput(bm.BindingUpdateInput):
-    pass
+    """Data to update a binding."""
 
 
 ListRequestLimit = int | None
@@ -174,7 +180,7 @@ ListRequestWhere = BindingWhereInput | None
 
 ListRequestInclude = BindingInclude | None
 
-ListRequestOrder = BindingOrderByInput | list[BindingOrderByInput] | None
+ListRequestOrder = BindingOrderByInput | Sequence[BindingOrderByInput] | None
 
 ListResponseResults = BindingList
 
@@ -300,5 +306,3 @@ class DeleteRequest:
 @datamodel
 class DeleteResponse:
     """Response for deleting a binding."""
-
-    pass
