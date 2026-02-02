@@ -1,10 +1,8 @@
-# pyright: reportIncompatibleVariableOverride=false
-
 from collections.abc import AsyncIterator, Sequence
 from datetime import datetime
 from uuid import UUID
 
-from pelican.models.base import SerializableModel, datamodel, serializable
+from pelican.models.base import SerializableModel, datamodel
 from pelican.services.media import models as mm
 
 
@@ -110,113 +108,87 @@ class MediaList(SerializableModel):
     """Media that matched the request."""
 
 
-@serializable
-class MediaWhereInput(mm.MediaWhereInput):
-    """Filter to apply to find media."""
+MediaWhereInput = mm.MediaWhereInput
 
+MediaWhereUniqueIdInput = mm.MediaWhereUniqueIdInput
 
-@serializable
-class MediaWhereUniqueIdInput(mm.MediaWhereUniqueIdInput):
-    """Filter to apply to find media by unique ID."""
+MediaWhereUniqueNameInput = mm.MediaWhereUniqueNameInput
 
+type MediaWhereUniqueInput = MediaWhereUniqueIdInput | MediaWhereUniqueNameInput
 
-@serializable
-class MediaWhereUniqueNameInput(mm.MediaWhereUniqueNameInput):
-    """Filter to apply to find media by unique name."""
+MediaInclude = mm.MediaInclude
 
+MediaOrderByIdInput = mm.MediaOrderByIdInput
 
-MediaWhereUniqueInput = MediaWhereUniqueIdInput | MediaWhereUniqueNameInput
+MediaOrderByNameInput = mm.MediaOrderByNameInput
 
+type MediaOrderByInput = MediaOrderByIdInput | MediaOrderByNameInput
 
-@serializable
-class MediaInclude(mm.MediaInclude):
-    """Relations to include in the response."""
+MediaCreateInput = mm.MediaCreateInput
 
+MediaUpdateInput = mm.MediaUpdateInput
 
-@serializable
-class MediaOrderByIdInput(mm.MediaOrderByIdInput):
-    """Order by media ID."""
+type ListRequestLimit = int | None
 
+type ListRequestOffset = int | None
 
-@serializable
-class MediaOrderByNameInput(mm.MediaOrderByNameInput):
-    """Order by media name."""
+type ListRequestWhere = MediaWhereInput | None
 
+type ListRequestInclude = MediaInclude | None
 
-MediaOrderByInput = MediaOrderByIdInput | MediaOrderByNameInput
+type ListRequestOrder = MediaOrderByInput | Sequence[MediaOrderByInput] | None
 
+type ListResponseResults = MediaList
 
-@serializable
-class MediaCreateInput(mm.MediaCreateInput):
-    """Data to create media."""
+type GetRequestId = UUID
 
+type GetRequestInclude = MediaInclude | None
 
-@serializable
-class MediaUpdateInput(mm.MediaUpdateInput):
-    """Data to update media."""
+type GetResponseMedia = Media
 
+type CreateRequestData = MediaCreateInput
 
-ListRequestLimit = int | None
+type CreateRequestInclude = MediaInclude | None
 
-ListRequestOffset = int | None
+type CreateResponseMedia = Media
 
-ListRequestWhere = MediaWhereInput | None
+type UpdateRequestData = MediaUpdateInput
 
-ListRequestInclude = MediaInclude | None
+type UpdateRequestId = UUID
 
-ListRequestOrder = MediaOrderByInput | Sequence[MediaOrderByInput] | None
+type UpdateRequestInclude = MediaInclude | None
 
-ListResponseResults = MediaList
+type UpdateResponseMedia = Media
 
-GetRequestId = UUID
+type DeleteRequestId = UUID
 
-GetRequestInclude = MediaInclude | None
+type UploadRequestId = UUID
 
-GetResponseMedia = Media
+type UploadRequestType = str
 
-CreateRequestData = MediaCreateInput
+type UploadRequestData = AsyncIterator[bytes]
 
-CreateRequestInclude = MediaInclude | None
+type DownloadRequestId = UUID
 
-CreateResponseMedia = Media
+type DownloadResponseType = str
 
-UpdateRequestData = MediaUpdateInput
+type DownloadResponseSize = int
 
-UpdateRequestId = UUID
+type DownloadResponseTag = str
 
-UpdateRequestInclude = MediaInclude | None
+type DownloadResponseModified = datetime
 
-UpdateResponseMedia = Media
+type DownloadResponseData = AsyncIterator[bytes]
 
-DeleteRequestId = UUID
+type HeadDownloadRequestId = UUID
 
-UploadRequestId = UUID
+type HeadDownloadResponseType = str
 
-UploadRequestType = str
+type HeadDownloadResponseSize = int
 
-UploadRequestData = AsyncIterator[bytes]
+type HeadDownloadResponseTag = str
 
-DownloadRequestId = UUID
-
-DownloadResponseType = str
-
-DownloadResponseSize = int
-
-DownloadResponseTag = str
-
-DownloadResponseModified = datetime
-
-DownloadResponseData = AsyncIterator[bytes]
-
-HeadDownloadRequestId = UUID
-
-HeadDownloadResponseType = str
-
-HeadDownloadResponseSize = int
-
-HeadDownloadResponseTag = str
-
-HeadDownloadResponseModified = datetime
+type HeadDownloadResponseModified = datetime
 
 
 @datamodel

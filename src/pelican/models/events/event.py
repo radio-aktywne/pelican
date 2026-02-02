@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import Field, RootModel
+from pydantic import Field
 
 from pelican.models.events import binding as be
 from pelican.models.events import media as me
@@ -18,4 +18,3 @@ type Event = Annotated[
     | pe.PlaylistDeletedEvent,
     Field(discriminator="type"),
 ]
-ParsableEvent = RootModel[Event]

@@ -2,7 +2,8 @@ from collections.abc import AsyncGenerator
 
 from litestar.channels import ChannelsPlugin
 
-from pelican.models.events.event import Event, ParsableEvent
+from pelican.models.base import Serializable
+from pelican.models.events.event import Event
 from pelican.services.events import models as m
 
 
@@ -17,13 +18,8 @@ class EventsService:
 
         async with subscription as subscriber:
             async for event in subscriber.iter_events():
-                pe = ParsableEvent.model_validate_json(event)
-                yield pe.root
+                yield Serializable[Event].model_validate_json(event).root
 
     async def subscribe(self, request: m.SubscribeRequest) -> m.SubscribeResponse:
         """Subscribe to app events."""
-        events = self._subscribe()
-
-        return m.SubscribeResponse(
-            events=events,
-        )
+        return m.SubscribeResponse(events=self._subscribe())

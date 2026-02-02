@@ -1,9 +1,7 @@
-# pyright: reportIncompatibleVariableOverride=false
-
 from collections.abc import Sequence
 from uuid import UUID
 
-from pelican.models.base import SerializableModel, datamodel, serializable
+from pelican.models.base import SerializableModel, datamodel
 from pelican.services.bindings import models as bm
 
 
@@ -109,102 +107,70 @@ class BindingList(SerializableModel):
     """Bindings that matched the request."""
 
 
-@serializable
-class BindingWhereInput(bm.BindingWhereInput):
-    """Filter to apply to find bindings."""
+BindingWhereInput = bm.BindingWhereInput
 
+BindingWhereUniqueIdInput = bm.BindingWhereUniqueIdInput
 
-@serializable
-class BindingWhereUniqueIdInput(bm.BindingWhereUniqueIdInput):
-    """Filter to apply to find a binding by unique ID."""
+BindingWhereUniquePlaylistIdRankInput = bm.BindingWhereUniquePlaylistIdRankInput
 
-
-@serializable
-class BindingWhereUniquePlaylistIdRankInput(bm.BindingWhereUniquePlaylistIdRankInput):
-    """Filter to apply to find a binding by unique playlist ID and rank."""
-
-
-BindingWhereUniqueInput = (
+type BindingWhereUniqueInput = (
     BindingWhereUniqueIdInput | BindingWhereUniquePlaylistIdRankInput
 )
 
+BindingInclude = bm.BindingInclude
 
-@serializable
-class BindingInclude(bm.BindingInclude):
-    """Relations to include in the response."""
+BindingOrderByIdInput = bm.BindingOrderByIdInput
 
+BindingOrderByPlaylistIdInput = bm.BindingOrderByPlaylistIdInput
 
-@serializable
-class BindingOrderByIdInput(bm.BindingOrderByIdInput):
-    """Order by binding ID."""
+BindingOrderByMediaIdInput = bm.BindingOrderByMediaIdInput
 
+BindingOrderByRankInput = bm.BindingOrderByRankInput
 
-@serializable
-class BindingOrderByPlaylistIdInput(bm.BindingOrderByPlaylistIdInput):
-    """Order by playlist ID."""
-
-
-@serializable
-class BindingOrderByMediaIdInput(bm.BindingOrderByMediaIdInput):
-    """Order by media ID."""
-
-
-@serializable
-class BindingOrderByRankInput(bm.BindingOrderByRankInput):
-    """Order by rank."""
-
-
-BindingOrderByInput = (
+type BindingOrderByInput = (
     BindingOrderByIdInput
     | BindingOrderByPlaylistIdInput
     | BindingOrderByMediaIdInput
     | BindingOrderByRankInput
 )
 
+BindingCreateInput = bm.BindingCreateInput
 
-@serializable
-class BindingCreateInput(bm.BindingCreateInput):
-    """Data to create a binding."""
+BindingUpdateInput = bm.BindingUpdateInput
 
+type ListRequestLimit = int | None
 
-@serializable
-class BindingUpdateInput(bm.BindingUpdateInput):
-    """Data to update a binding."""
+type ListRequestOffset = int | None
 
+type ListRequestWhere = BindingWhereInput | None
 
-ListRequestLimit = int | None
+type ListRequestInclude = BindingInclude | None
 
-ListRequestOffset = int | None
+type ListRequestOrder = BindingOrderByInput | Sequence[BindingOrderByInput] | None
 
-ListRequestWhere = BindingWhereInput | None
+type ListResponseResults = BindingList
 
-ListRequestInclude = BindingInclude | None
+type GetRequestId = UUID
 
-ListRequestOrder = BindingOrderByInput | Sequence[BindingOrderByInput] | None
+type GetRequestInclude = BindingInclude | None
 
-ListResponseResults = BindingList
+type GetResponseBinding = Binding
 
-GetRequestId = UUID
+type CreateRequestData = BindingCreateInput
 
-GetRequestInclude = BindingInclude | None
+type CreateRequestInclude = BindingInclude | None
 
-GetResponseBinding = Binding
+type CreateResponseBinding = Binding
 
-CreateRequestData = BindingCreateInput
+type UpdateRequestData = BindingUpdateInput
 
-CreateRequestInclude = BindingInclude | None
+type UpdateRequestId = UUID
 
-CreateResponseBinding = Binding
+type UpdateRequestInclude = BindingInclude | None
 
-UpdateRequestData = BindingUpdateInput
+type UpdateResponseBinding = Binding
 
-UpdateRequestId = UUID
-
-UpdateRequestInclude = BindingInclude | None
-
-UpdateResponseBinding = Binding
-
-DeleteRequestId = UUID
+type DeleteRequestId = UUID
 
 
 @datamodel

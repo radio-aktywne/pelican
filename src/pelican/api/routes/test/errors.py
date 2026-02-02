@@ -4,7 +4,3 @@ class ServiceError(Exception):
 
 class ValidationError(ServiceError):
     """Raised when a validation error occurs."""
-
-
-class GraphiteError(ServiceError):
-    """Raised when a graphite database operation fails."""

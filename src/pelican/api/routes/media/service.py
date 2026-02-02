@@ -19,248 +19,149 @@ class Service:
         try:
             yield
         except me.ValidationError as ex:
-            raise e.ValidationError(str(ex)) from ex
+            raise e.ValidationError from ex
         except me.GraphiteError as ex:
-            raise e.GraphiteError(str(ex)) from ex
+            raise e.GraphiteError from ex
         except me.MiniumError as ex:
-            raise e.MiniumError(str(ex)) from ex
+            raise e.MiniumError from ex
         except me.ServiceError as ex:
-            raise e.ServiceError(str(ex)) from ex
+            raise e.ServiceError from ex
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List media."""
-        limit = request.limit
-        offset = request.offset
-        where = request.where
-        include = request.include
-        order = request.order
+        count_request = mm.CountRequest(where=request.where)
 
-        req = mm.CountRequest(
-            where=where,
+        with self._handle_errors():
+            count_response = await self._media.count(count_request)
+
+        list_request = mm.ListRequest(
+            limit=request.limit,
+            offset=request.offset,
+            where=request.where,
+            include=request.include,
+            order=request.order,
         )
 
         with self._handle_errors():
-            res = await self._media.count(req)
+            list_response = await self._media.list(list_request)
 
-        count = res.count
-
-        req = mm.ListRequest(
-            limit=limit,
-            offset=offset,
-            where=where,
-            include=include,
-            order=order,
-        )
-
-        with self._handle_errors():
-            res = await self._media.list(req)
-
-        media = res.media
-
-        media = [m.Media.map(med) for med in media]
-        results = m.MediaList(
-            count=count,
-            limit=limit,
-            offset=offset,
-            media=media,
-        )
         return m.ListResponse(
-            results=results,
+            results=m.MediaList(
+                count=count_response.count,
+                limit=request.limit,
+                offset=request.offset,
+                media=[m.Media.map(med) for med in list_response.media],
+            )
         )
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get media."""
-        media_id = request.id
-        include = request.include
-
-        req = mm.GetRequest(
-            where={
-                "id": str(media_id),
-            },
-            include=include,
+        get_request = mm.GetRequest(
+            where={"id": str(request.id)}, include=request.include
         )
 
         with self._handle_errors():
-            res = await self._media.get(req)
+            get_response = await self._media.get(get_request)
 
-        media = res.media
+        if get_response.media is None:
+            raise e.MediaNotFoundError(request.id)
 
-        if media is None:
-            raise e.MediaNotFoundError(media_id)
-
-        media = m.Media.map(media)
-        return m.GetResponse(
-            media=media,
-        )
+        return m.GetResponse(media=m.Media.map(get_response.media))
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create media."""
-        data = request.data
-        include = request.include
-
-        req = mm.CreateRequest(
-            data=data,
-            include=include,
-        )
+        create_request = mm.CreateRequest(data=request.data, include=request.include)
 
         with self._handle_errors():
-            res = await self._media.create(req)
+            create_response = await self._media.create(create_request)
 
-        media = res.media
-
-        media = m.Media.map(media)
-        return m.CreateResponse(
-            media=media,
-        )
+        return m.CreateResponse(media=m.Media.map(create_response.media))
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update media."""
-        data = request.data
-        media_id = request.id
-        include = request.include
-
-        req = mm.UpdateRequest(
-            data=data,
-            where={
-                "id": str(media_id),
-            },
-            include=include,
+        update_request = mm.UpdateRequest(
+            data=request.data, where={"id": str(request.id)}, include=request.include
         )
 
         with self._handle_errors():
-            res = await self._media.update(req)
+            update_response = await self._media.update(update_request)
 
-        media = res.media
+        if update_response.media is None:
+            raise e.MediaNotFoundError(request.id)
 
-        if media is None:
-            raise e.MediaNotFoundError(media_id)
-
-        media = m.Media.map(media)
-        return m.UpdateResponse(
-            media=media,
-        )
+        return m.UpdateResponse(media=m.Media.map(update_response.media))
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete media."""
-        media_id = request.id
-
-        req = mm.DeleteRequest(
-            where={
-                "id": str(media_id),
-            },
-            include=None,
-        )
+        delete_request = mm.DeleteRequest(where={"id": str(request.id)}, include=None)
 
         with self._handle_errors():
-            res = await self._media.delete(req)
+            delete_response = await self._media.delete(delete_request)
 
-        media = res.media
-
-        if media is None:
-            raise e.MediaNotFoundError(media_id)
+        if delete_response.media is None:
+            raise e.MediaNotFoundError(request.id)
 
         return m.DeleteResponse()
 
     async def upload(self, request: m.UploadRequest) -> m.UploadResponse:
         """Upload media content."""
-        media_id = request.id
-        content_type = request.type
-        data = request.data
-
-        content = mm.UploadContent(
-            type=content_type,
-            data=data,
-        )
-        req = mm.UploadRequest(
-            where={
-                "id": str(media_id),
-            },
+        upload_request = mm.UploadRequest(
+            where={"id": str(request.id)},
             include=None,
-            content=content,
+            content=mm.UploadContent(type=request.type, data=request.data),
         )
 
         with self._handle_errors():
-            res = await self._media.upload(req)
+            upload_response = await self._media.upload(upload_request)
 
-        media = res.media
-
-        if media is None:
-            raise e.MediaNotFoundError(media_id)
+        if upload_response.media is None:
+            raise e.MediaNotFoundError(request.id)
 
         return m.UploadResponse()
 
     async def download(self, request: m.DownloadRequest) -> m.DownloadResponse:
         """Download media content."""
-        media_id = request.id
-
-        req = mm.DownloadRequest(
-            where={
-                "id": str(media_id),
-            },
-            include=None,
+        download_request = mm.DownloadRequest(
+            where={"id": str(request.id)}, include=None
         )
 
         with self._handle_errors():
-            res = await self._media.download(req)
+            download_response = await self._media.download(download_request)
 
-        media = res.media
+        if download_response.media is None:
+            raise e.MediaNotFoundError(request.id)
 
-        if media is None:
-            raise e.MediaNotFoundError(media_id)
-
-        content = res.content
-
-        if content is None:
-            raise e.ContentNotFoundError(media_id)
-
-        content_type = content.type
-        size = content.size
-        tag = content.tag
-        modified = content.modified
-        data = content.data
+        if download_response.content is None:
+            raise e.ContentNotFoundError(request.id)
 
         return m.DownloadResponse(
-            type=content_type,
-            size=size,
-            tag=tag,
-            modified=modified,
-            data=data,
+            type=download_response.content.type,
+            size=download_response.content.size,
+            tag=download_response.content.tag,
+            modified=download_response.content.modified,
+            data=download_response.content.data,
         )
 
     async def headdownload(
         self, request: m.HeadDownloadRequest
     ) -> m.HeadDownloadResponse:
         """Download media content headers."""
-        media_id = request.id
-
-        req = mm.DownloadRequest(
-            where={
-                "id": str(media_id),
-            },
-            include=None,
+        download_request = mm.DownloadRequest(
+            where={"id": str(request.id)}, include=None
         )
 
         with self._handle_errors():
-            res = await self._media.download(req)
+            download_response = await self._media.download(download_request)
 
-        media = res.media
+        if download_response.media is None:
+            raise e.MediaNotFoundError(request.id)
 
-        if media is None:
-            raise e.MediaNotFoundError(media_id)
-
-        content = res.content
-
-        if content is None:
-            raise e.ContentNotFoundError(media_id)
-
-        content_type = content.type
-        size = content.size
-        tag = content.tag
-        modified = content.modified
+        if download_response.content is None:
+            raise e.ContentNotFoundError(request.id)
 
         return m.HeadDownloadResponse(
-            type=content_type,
-            size=size,
-            tag=tag,
-            modified=modified,
+            type=download_response.content.type,
+            size=download_response.content.size,
+            tag=download_response.content.tag,
+            modified=download_response.content.modified,
         )

@@ -5,6 +5,7 @@ from pelican.api.routes.media.router import router as media_router
 from pelican.api.routes.ping.router import router as ping_router
 from pelican.api.routes.playlists.router import router as playlists_router
 from pelican.api.routes.sse.router import router as sse_router
+from pelican.api.routes.test.router import router as test_router
 
 router = Router(
     path="/",
@@ -14,5 +15,6 @@ router = Router(
         ping_router,
         playlists_router,
         sse_router,
+        test_router,
     ],
 )
