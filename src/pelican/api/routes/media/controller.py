@@ -16,7 +16,7 @@ from pelican.api.exceptions import BadRequestException, NotFoundException
 from pelican.api.routes.media import errors as e
 from pelican.api.routes.media import models as m
 from pelican.api.routes.media.service import Service
-from pelican.api.validator import Validator
+from pelican.models.base import Jsonable, Serializable
 from pelican.services.media.service import MediaService
 from pelican.state import State
 from pelican.utils.time import httpstringify
@@ -25,16 +25,10 @@ from pelican.utils.time import httpstringify
 class DependenciesBuilder:
     """Builder for the dependencies of the controller."""
 
-    async def _build_service(
-        self,
-        state: State,
-        channels: ChannelsPlugin,
-    ) -> Service:
+    async def _build_service(self, state: State, channels: ChannelsPlugin) -> Service:
         return Service(
             media=MediaService(
-                graphite=state.graphite,
-                minium=state.minium,
-                channels=channels,
+                graphite=state.graphite, minium=state.minium, channels=channels
             )
         )
 
@@ -57,104 +51,83 @@ class Controller(BaseController):
         self,
         service: Service,
         limit: Annotated[
-            m.ListRequestLimit,
+            Jsonable[m.ListRequestLimit] | None,
             Parameter(
-                description="Maximum number of media to return.",
+                description="Maximum number of media to return. Default is 10.",
             ),
-        ] = 10,
+        ] = None,
         offset: Annotated[
-            m.ListRequestOffset,
+            Jsonable[m.ListRequestOffset] | None,
             Parameter(
                 description="Number of media to skip.",
             ),
         ] = None,
         where: Annotated[
-            str | None,
+            Jsonable[m.ListRequestWhere] | None,
             Parameter(
                 description="Filter to apply to find media.",
             ),
         ] = None,
         include: Annotated[
-            str | None,
+            Jsonable[m.ListRequestInclude] | None,
             Parameter(
                 description="Relations to include in the response.",
             ),
         ] = None,
         order: Annotated[
-            str | None,
+            Jsonable[m.ListRequestOrder] | None,
             Parameter(
                 description="Order to apply to the results.",
             ),
         ] = None,
-    ) -> Response[m.ListResponseResults]:
+    ) -> Response[Serializable[m.ListResponseResults]]:
         """List media that match the request."""
-        parsed_where = (
-            Validator[m.ListRequestWhere].validate_json(where) if where else None
-        )
-        parsed_include = (
-            Validator[m.ListRequestInclude].validate_json(include) if include else None
-        )
-        parsed_order = (
-            Validator[m.ListRequestOrder].validate_json(order) if order else None
-        )
-
-        req = m.ListRequest(
-            limit=limit,
-            offset=offset,
-            where=parsed_where,
-            include=parsed_include,
-            order=parsed_order,
+        request = m.ListRequest(
+            limit=limit.root if limit else 10,
+            offset=offset.root if offset else None,
+            where=where.root if where else None,
+            include=include.root if include else None,
+            order=order.root if order else None,
         )
 
         try:
-            res = await service.list(req)
+            response = await service.list(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
 
-        results = res.results
-
-        return Response(results)
+        return Response(Serializable(response.results))
 
     @handlers.get(
-        "/{id:uuid}",
+        "/{id:str}",
         summary="Get media",
     )
     async def get(
         self,
         service: Service,
         id: Annotated[  # noqa: A002
-            m.GetRequestId,
+            Serializable[m.GetRequestId],
             Parameter(
                 description="Identifier of the media to get.",
             ),
         ],
         include: Annotated[
-            str | None,
+            Jsonable[m.GetRequestInclude] | None,
             Parameter(
                 description="Relations to include in the response.",
             ),
         ] = None,
-    ) -> Response[m.GetResponseMedia]:
+    ) -> Response[Serializable[m.GetResponseMedia]]:
         """Get media by ID."""
-        parsed_include = (
-            Validator[m.GetRequestInclude].validate_json(include) if include else None
-        )
-
-        req = m.GetRequest(
-            id=id,
-            include=parsed_include,
-        )
+        request = m.GetRequest(id=id.root, include=include.root if include else None)
 
         try:
-            res = await service.get(req)
+            response = await service.get(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
         except e.MediaNotFoundError as ex:
             raise NotFoundException from ex
 
-        media = res.media
-
-        return Response(media)
+        return Response(Serializable(response.media))
 
     @handlers.post(
         summary="Create media",
@@ -163,93 +136,72 @@ class Controller(BaseController):
         self,
         service: Service,
         data: Annotated[
-            m.CreateRequestData,
+            Serializable[m.CreateRequestData],
             Body(
                 description="Data to create media.",
             ),
         ],
         include: Annotated[
-            str | None,
+            Jsonable[m.CreateRequestInclude] | None,
             Parameter(
                 description="Relations to include in the response.",
             ),
         ] = None,
-    ) -> Response[m.CreateResponseMedia]:
+    ) -> Response[Serializable[m.CreateResponseMedia]]:
         """Create new media."""
-        parsed_data = Validator[m.CreateRequestData].validate_object(data)
-        parsed_include = (
-            Validator[m.CreateRequestInclude].validate_json(include)
-            if include
-            else None
-        )
-
-        req = m.CreateRequest(
-            data=parsed_data,
-            include=parsed_include,
+        request = m.CreateRequest(
+            data=data.root, include=include.root if include else None
         )
 
         try:
-            res = await service.create(req)
+            response = await service.create(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
 
-        media = res.media
-
-        return Response(media)
+        return Response(Serializable(response.media))
 
     @handlers.patch(
-        "/{id:uuid}",
+        "/{id:str}",
         summary="Update media",
     )
     async def update(
         self,
         service: Service,
         id: Annotated[  # noqa: A002
-            m.UpdateRequestId,
+            Serializable[m.UpdateRequestId],
             Parameter(
                 description="Identifier of the media to update.",
             ),
         ],
         data: Annotated[
-            m.UpdateRequestData,
+            Serializable[m.UpdateRequestData],
             Body(
                 description="Data to update media.",
             ),
         ],
         include: Annotated[
-            str | None,
+            Jsonable[m.UpdateRequestInclude] | None,
             Parameter(
                 description="Relations to include in the response.",
             ),
         ] = None,
-    ) -> Response[m.UpdateResponseMedia]:
+    ) -> Response[Serializable[m.UpdateResponseMedia]]:
         """Update media by ID."""
-        parsed_data = Validator[m.UpdateRequestData].validate_object(data)
-        parsed_include = (
-            Validator[m.UpdateRequestInclude].validate_json(include)
-            if include
-            else None
-        )
-
-        req = m.UpdateRequest(
-            data=parsed_data,
-            id=id,
-            include=parsed_include,
+        request = m.UpdateRequest(
+            data=data.root, id=id.root, include=include.root if include else None
         )
 
         try:
-            res = await service.update(req)
+            response = await service.update(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
         except e.MediaNotFoundError as ex:
             raise NotFoundException from ex
 
-        media = res.media
-
-        return Response(media)
+        return Response(Serializable(response.media))
 
     @handlers.delete(
-        "/{id:uuid}",
+        "/{id:str}",
         summary="Delete media",
         responses={
             HTTP_204_NO_CONTENT: ResponseSpec(
@@ -261,19 +213,17 @@ class Controller(BaseController):
         self,
         service: Service,
         id: Annotated[  # noqa: A002
-            m.DeleteRequestId,
+            Serializable[m.DeleteRequestId],
             Parameter(
                 description="Identifier of the media to delete.",
             ),
         ],
     ) -> Response[None]:
         """Delete media by ID."""
-        req = m.DeleteRequest(
-            id=id,
-        )
+        request = m.DeleteRequest(id=id.root)
 
         try:
-            await service.delete(req)
+            await service.delete(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
         except e.MediaNotFoundError as ex:
@@ -282,7 +232,7 @@ class Controller(BaseController):
         return Response(None)
 
     @handlers.put(
-        "/{id:uuid}/content",
+        "/{id:str}/content",
         summary="Upload media content",
         status_code=HTTP_204_NO_CONTENT,
         responses={
@@ -295,13 +245,13 @@ class Controller(BaseController):
         self,
         service: Service,
         id: Annotated[  # noqa: A002
-            m.UploadRequestId,
+            Serializable[m.UploadRequestId],
             Parameter(
                 description="Identifier of the media to upload content for.",
             ),
         ],
         type: Annotated[  # noqa: A002
-            m.UploadRequestType,
+            Jsonable[m.UploadRequestType],
             Parameter(
                 header="Content-Type",
                 description="Content type.",
@@ -321,11 +271,7 @@ class Controller(BaseController):
 
                 yield chunk
 
-        req = m.UploadRequest(
-            id=id,
-            type=type,
-            data=_stream(request),
-        )
+        req = m.UploadRequest(id=id.root, type=type.root, data=_stream(request))
 
         try:
             await service.upload(req)
@@ -335,10 +281,11 @@ class Controller(BaseController):
             raise NotFoundException from ex
         except e.ContentNotFoundError as ex:
             raise NotFoundException from ex
+
         return Response(None)
 
     @handlers.get(
-        "/{id:uuid}/content",
+        "/{id:str}/content",
         summary="Download media content",
         response_headers=[
             ResponseHeader(
@@ -375,19 +322,17 @@ class Controller(BaseController):
         self,
         service: Service,
         id: Annotated[  # noqa: A002
-            m.DownloadRequestId,
+            Serializable[m.DownloadRequestId],
             Parameter(
                 description="Identifier of the media to download content for.",
             ),
         ],
     ) -> Stream:
         """Download media content by ID."""
-        req = m.DownloadRequest(
-            id=id,
-        )
+        request = m.DownloadRequest(id=id.root)
 
         try:
-            res = await service.download(req)
+            response = await service.download(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
         except e.MediaNotFoundError as ex:
@@ -395,25 +340,18 @@ class Controller(BaseController):
         except e.ContentNotFoundError as ex:
             raise NotFoundException from ex
 
-        content_type = res.type
-        size = res.size
-        tag = res.tag
-        modified = res.modified
-        data = res.data
-
-        headers = {
-            "Content-Type": content_type,
-            "Content-Length": str(size),
-            "ETag": tag,
-            "Last-Modified": httpstringify(modified),
-        }
         return Stream(
-            data,
-            headers=headers,
+            response.data,
+            headers={
+                "Content-Type": response.type,
+                "Content-Length": str(response.size),
+                "ETag": response.tag,
+                "Last-Modified": httpstringify(response.modified),
+            },
         )
 
     @handlers.head(
-        "/{id:uuid}/content",
+        "/{id:str}/content",
         summary="Get media content headers",
         response_headers=[
             ResponseHeader(
@@ -447,19 +385,17 @@ class Controller(BaseController):
         self,
         service: Service,
         id: Annotated[  # noqa: A002
-            m.DownloadRequestId,
+            Serializable[m.DownloadRequestId],
             Parameter(
                 description="Identifier of the media to get content headers for.",
             ),
         ],
     ) -> Response[None]:
         """Get media content headers by ID."""
-        req = m.DownloadRequest(
-            id=id,
-        )
+        request = m.DownloadRequest(id=id.root)
 
         try:
-            res = await service.download(req)
+            response = await service.download(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
         except e.MediaNotFoundError as ex:
@@ -467,18 +403,12 @@ class Controller(BaseController):
         except e.ContentNotFoundError as ex:
             raise NotFoundException from ex
 
-        content_type = res.type
-        size = res.size
-        tag = res.tag
-        modified = res.modified
-
-        headers = {
-            "Content-Type": content_type,
-            "Content-Length": str(size),
-            "ETag": tag,
-            "Last-Modified": httpstringify(modified),
-        }
         return Response(
             None,
-            headers=headers,
+            headers={
+                "Content-Type": response.type,
+                "Content-Length": str(response.size),
+                "ETag": response.tag,
+                "Last-Modified": httpstringify(response.modified),
+            },
         )

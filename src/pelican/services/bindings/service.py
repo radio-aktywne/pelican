@@ -17,11 +17,7 @@ from pelican.services.graphite.service import GraphiteService
 class BindingsService:
     """Service to manage bindings."""
 
-    def __init__(
-        self,
-        graphite: GraphiteService,
-        channels: ChannelsPlugin,
-    ) -> None:
+    def __init__(self, graphite: GraphiteService, channels: ChannelsPlugin) -> None:
         self._graphite = graphite
         self._channels = channels
 
@@ -30,43 +26,34 @@ class BindingsService:
         self._channels.publish(data, "events")
 
     def _emit_binding_created_event(self, binding: m.Binding) -> None:
-        mapped_binding = ev.Binding.map(binding)
-        created_event_data = ev.BindingCreatedEventData(
-            binding=mapped_binding,
+        self._emit_event(
+            ev.BindingCreatedEvent(
+                data=ev.BindingCreatedEventData(binding=ev.Binding.map(binding))
+            )
         )
-        created_event = ev.BindingCreatedEvent(
-            data=created_event_data,
-        )
-        self._emit_event(created_event)
 
     def _emit_binding_updated_event(self, binding: m.Binding) -> None:
-        mapped_binding = ev.Binding.map(binding)
-        updated_event_data = ev.BindingUpdatedEventData(
-            binding=mapped_binding,
+        self._emit_event(
+            ev.BindingUpdatedEvent(
+                data=ev.BindingUpdatedEventData(binding=ev.Binding.map(binding))
+            )
         )
-        updated_event = ev.BindingUpdatedEvent(
-            data=updated_event_data,
-        )
-        self._emit_event(updated_event)
 
     def _emit_binding_deleted_event(self, binding: m.Binding) -> None:
-        mapped_binding = ev.Binding.map(binding)
-        deleted_event_data = ev.BindingDeletedEventData(
-            binding=mapped_binding,
+        self._emit_event(
+            ev.BindingDeletedEvent(
+                data=ev.BindingDeletedEventData(binding=ev.Binding.map(binding))
+            )
         )
-        deleted_event = ev.BindingDeletedEvent(
-            data=deleted_event_data,
-        )
-        self._emit_event(deleted_event)
 
     @contextmanager
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
         except ge.DataError as ex:
-            raise e.ValidationError(str(ex)) from ex
+            raise e.ValidationError from ex
         except ge.ServiceError as ex:
-            raise e.GraphiteError(str(ex)) from ex
+            raise e.GraphiteError from ex
 
     def _validate_rank(self, rank: str) -> None:
         try:
@@ -76,117 +63,78 @@ class BindingsService:
 
     async def count(self, request: m.CountRequest) -> m.CountResponse:
         """Count bindings."""
-        where = request.where
-
         with self._handle_errors():
-            count = await self._graphite.binding.count(
-                where=where,
-            )
+            count = await self._graphite.binding.count(where=request.where)
 
-        return m.CountResponse(
-            count=count,
-        )
+        return m.CountResponse(count=count)
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List all bindings."""
-        limit = request.limit
-        offset = request.offset
-        where = request.where
-        include = request.include
-        order = request.order
-
         with self._handle_errors():
             bindings = await self._graphite.binding.find_many(
-                take=limit,
-                skip=offset,
-                where=where,
-                include=include,
-                order=list(order) if isinstance(order, Sequence) else order,
+                take=request.limit,
+                skip=request.offset,
+                where=request.where,
+                include=request.include,
+                order=list(request.order)
+                if isinstance(request.order, Sequence)
+                else request.order,
             )
 
-        return m.ListResponse(
-            bindings=bindings,
-        )
+        return m.ListResponse(bindings=bindings)
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get binding."""
-        where = request.where
-        include = request.include
-
         with self._handle_errors():
             binding = await self._graphite.binding.find_unique(
-                where=where,
-                include=include,
+                where=request.where, include=request.include
             )
 
-        return m.GetResponse(
-            binding=binding,
-        )
+        return m.GetResponse(binding=binding)
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create binding."""
-        data = request.data
-        include = request.include
-
-        self._validate_rank(data["rank"])
+        self._validate_rank(request.data["rank"])
 
         with self._handle_errors():
             binding = await self._graphite.binding.create(
-                data=cast("gt.BindingCreateInput", data),
-                include=include,
+                data=cast("gt.BindingCreateInput", request.data),
+                include=request.include,
             )
 
         self._emit_binding_created_event(binding)
 
-        return m.CreateResponse(
-            binding=binding,
-        )
+        return m.CreateResponse(binding=binding)
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update binding."""
-        data = request.data
-        where = request.where
-        include = request.include
-
-        if "rank" in data:
-            self._validate_rank(data["rank"])
+        if "rank" in request.data:
+            self._validate_rank(request.data["rank"])
 
         with self._handle_errors():
             binding = await self._graphite.binding.update(
-                data=cast("gt.BindingUpdateInput", data),
-                where=where,
-                include=include,
+                data=cast("gt.BindingUpdateInput", request.data),
+                where=request.where,
+                include=request.include,
             )
 
         if binding is None:
-            return m.UpdateResponse(
-                binding=None,
-            )
+            return m.UpdateResponse(binding=None)
 
         self._emit_binding_updated_event(binding)
 
-        return m.UpdateResponse(
-            binding=binding,
-        )
+        return m.UpdateResponse(binding=binding)
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete binding."""
-        where = request.where
-        include = request.include
-
         with self._handle_errors():
             binding = await self._graphite.binding.delete(
-                where=where,
-                include=include,
+                where=request.where, include=request.include
             )
 
         if binding is None:
-            return m.DeleteResponse(
-                binding=None,
-            )
+            return m.DeleteResponse(binding=None)
 
         self._emit_binding_deleted_event(binding)
 
-        return m.DeleteResponse(
-            binding=binding,
-        )
+        return m.DeleteResponse(binding=binding)

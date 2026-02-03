@@ -1,5 +1,3 @@
-# ruff: noqa: SLF001
-
 from collections.abc import Sequence
 
 from pelican.models.base import datamodel
@@ -16,17 +14,19 @@ PlaylistWhereInput = gt.PlaylistWhereInput
 
 PlaylistInclude = gt.PlaylistInclude
 
-PlaylistWhereUniqueIdInput = gt._PlaylistWhereUnique_id_Input
+PlaylistWhereUniqueIdInput = gt._PlaylistWhereUnique_id_Input  # noqa: SLF001
 
-PlaylistWhereUniqueNameInput = gt._PlaylistWhereUnique_name_Input
+PlaylistWhereUniqueNameInput = gt._PlaylistWhereUnique_name_Input  # noqa: SLF001
 
-PlaylistWhereUniqueInput = PlaylistWhereUniqueIdInput | PlaylistWhereUniqueNameInput
+type PlaylistWhereUniqueInput = (
+    PlaylistWhereUniqueIdInput | PlaylistWhereUniqueNameInput
+)
 
-PlaylistOrderByIdInput = gt._Playlist_id_OrderByInput
+PlaylistOrderByIdInput = gt._Playlist_id_OrderByInput  # noqa: SLF001
 
-PlaylistOrderByNameInput = gt._Playlist_name_OrderByInput
+PlaylistOrderByNameInput = gt._Playlist_name_OrderByInput  # noqa: SLF001
 
-PlaylistOrderByInput = PlaylistOrderByIdInput | PlaylistOrderByNameInput
+type PlaylistOrderByInput = PlaylistOrderByIdInput | PlaylistOrderByNameInput
 
 PlaylistCreateInput = gt.PlaylistCreateWithoutRelationsInput
 

@@ -1,5 +1,3 @@
-# ruff: noqa: SLF001
-
 from collections.abc import Sequence
 from typing import TypedDict
 
@@ -17,23 +15,23 @@ BindingWhereInput = gt.BindingWhereInput
 
 BindingInclude = gt.BindingInclude
 
-BindingWhereUniqueIdInput = gt._BindingWhereUnique_id_Input
+BindingWhereUniqueIdInput = gt._BindingWhereUnique_id_Input  # noqa: SLF001
 
-BindingWhereUniquePlaylistIdRankInput = gt._BindingCompoundplaylistId_rankKey
+BindingWhereUniquePlaylistIdRankInput = gt._BindingCompoundplaylistId_rankKey  # noqa: SLF001
 
-BindingWhereUniqueInput = (
+type BindingWhereUniqueInput = (
     BindingWhereUniqueIdInput | BindingWhereUniquePlaylistIdRankInput
 )
 
-BindingOrderByIdInput = gt._Binding_id_OrderByInput
+BindingOrderByIdInput = gt._Binding_id_OrderByInput  # noqa: SLF001
 
-BindingOrderByPlaylistIdInput = gt._Binding_playlistId_OrderByInput
+BindingOrderByPlaylistIdInput = gt._Binding_playlistId_OrderByInput  # noqa: SLF001
 
-BindingOrderByMediaIdInput = gt._Binding_mediaId_OrderByInput
+BindingOrderByMediaIdInput = gt._Binding_mediaId_OrderByInput  # noqa: SLF001
 
-BindingOrderByRankInput = gt._Binding_rank_OrderByInput
+BindingOrderByRankInput = gt._Binding_rank_OrderByInput  # noqa: SLF001
 
-BindingOrderByInput = (
+type BindingOrderByInput = (
     BindingOrderByIdInput
     | BindingOrderByPlaylistIdInput
     | BindingOrderByMediaIdInput

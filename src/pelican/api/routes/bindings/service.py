@@ -19,142 +19,84 @@ class Service:
         try:
             yield
         except be.ValidationError as ex:
-            raise e.ValidationError(str(ex)) from ex
+            raise e.ValidationError from ex
         except be.GraphiteError as ex:
-            raise e.GraphiteError(str(ex)) from ex
+            raise e.GraphiteError from ex
         except be.ServiceError as ex:
-            raise e.ServiceError(str(ex)) from ex
+            raise e.ServiceError from ex
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List bindings."""
-        limit = request.limit
-        offset = request.offset
-        where = request.where
-        include = request.include
-        order = request.order
+        count_request = bm.CountRequest(where=request.where)
 
-        req = bm.CountRequest(
-            where=where,
+        with self._handle_errors():
+            count_response = await self._bindings.count(count_request)
+
+        list_request = bm.ListRequest(
+            limit=request.limit,
+            offset=request.offset,
+            where=request.where,
+            include=request.include,
+            order=request.order,
         )
 
         with self._handle_errors():
-            res = await self._bindings.count(req)
+            list_response = await self._bindings.list(list_request)
 
-        count = res.count
-
-        req = bm.ListRequest(
-            limit=limit,
-            offset=offset,
-            where=where,
-            include=include,
-            order=order,
-        )
-
-        with self._handle_errors():
-            res = await self._bindings.list(req)
-
-        bindings = res.bindings
-
-        bindings = [m.Binding.map(p) for p in bindings]
-        results = m.BindingList(
-            count=count,
-            limit=limit,
-            offset=offset,
-            bindings=bindings,
-        )
         return m.ListResponse(
-            results=results,
+            results=m.BindingList(
+                count=count_response.count,
+                limit=request.limit,
+                offset=request.offset,
+                bindings=[m.Binding.map(binding) for binding in list_response.bindings],
+            )
         )
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get binding."""
-        binding_id = request.id
-        include = request.include
-
-        req = bm.GetRequest(
-            where={
-                "id": str(binding_id),
-            },
-            include=include,
+        get_request = bm.GetRequest(
+            where={"id": str(request.id)}, include=request.include
         )
 
         with self._handle_errors():
-            res = await self._bindings.get(req)
+            get_response = await self._bindings.get(get_request)
 
-        binding = res.binding
+        if get_response.binding is None:
+            raise e.BindingNotFoundError(request.id)
 
-        if binding is None:
-            raise e.BindingNotFoundError(binding_id)
-
-        binding = m.Binding.map(binding)
-        return m.GetResponse(
-            binding=binding,
-        )
+        return m.GetResponse(binding=m.Binding.map(get_response.binding))
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create binding."""
-        data = request.data
-        include = request.include
-
-        req = bm.CreateRequest(
-            data=data,
-            include=include,
-        )
+        create_request = bm.CreateRequest(data=request.data, include=request.include)
 
         with self._handle_errors():
-            res = await self._bindings.create(req)
+            create_response = await self._bindings.create(create_request)
 
-        binding = res.binding
-
-        binding = m.Binding.map(binding)
-        return m.CreateResponse(
-            binding=binding,
-        )
+        return m.CreateResponse(binding=m.Binding.map(create_response.binding))
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update binding."""
-        data = request.data
-        binding_id = request.id
-        include = request.include
-
-        req = bm.UpdateRequest(
-            data=data,
-            where={
-                "id": str(binding_id),
-            },
-            include=include,
+        update_request = bm.UpdateRequest(
+            data=request.data, where={"id": str(request.id)}, include=request.include
         )
 
         with self._handle_errors():
-            res = await self._bindings.update(req)
+            update_response = await self._bindings.update(update_request)
 
-        binding = res.binding
+        if update_response.binding is None:
+            raise e.BindingNotFoundError(request.id)
 
-        if binding is None:
-            raise e.BindingNotFoundError(binding_id)
-
-        binding = m.Binding.map(binding)
-        return m.UpdateResponse(
-            binding=binding,
-        )
+        return m.UpdateResponse(binding=m.Binding.map(update_response.binding))
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete binding."""
-        binding_id = request.id
-
-        req = bm.DeleteRequest(
-            where={
-                "id": str(binding_id),
-            },
-            include=None,
-        )
+        delete_request = bm.DeleteRequest(where={"id": str(request.id)}, include=None)
 
         with self._handle_errors():
-            res = await self._bindings.delete(req)
+            delete_response = await self._bindings.delete(delete_request)
 
-        binding = res.binding
-
-        if binding is None:
-            raise e.BindingNotFoundError(binding_id)
+        if delete_response.binding is None:
+            raise e.BindingNotFoundError(request.id)
 
         return m.DeleteResponse()

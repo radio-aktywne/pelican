@@ -19,11 +19,7 @@ from pelican.utils.m3u import M3U
 class PlaylistsService:
     """Service to manage playlists."""
 
-    def __init__(
-        self,
-        graphite: GraphiteService,
-        channels: ChannelsPlugin,
-    ) -> None:
+    def __init__(self, graphite: GraphiteService, channels: ChannelsPlugin) -> None:
         self._graphite = graphite
         self._channels = channels
 
@@ -32,129 +28,91 @@ class PlaylistsService:
         self._channels.publish(data, "events")
 
     def _emit_playlist_created_event(self, playlist: m.Playlist) -> None:
-        mapped_playlist = pev.Playlist.map(playlist)
-        created_event_data = pev.PlaylistCreatedEventData(
-            playlist=mapped_playlist,
+        self._emit_event(
+            pev.PlaylistCreatedEvent(
+                data=pev.PlaylistCreatedEventData(playlist=pev.Playlist.map(playlist))
+            )
         )
-        created_event = pev.PlaylistCreatedEvent(
-            data=created_event_data,
-        )
-        self._emit_event(created_event)
 
     def _emit_playlist_updated_event(self, playlist: m.Playlist) -> None:
-        mapped_playlist = pev.Playlist.map(playlist)
-        updated_event_data = pev.PlaylistUpdatedEventData(
-            playlist=mapped_playlist,
+        self._emit_event(
+            pev.PlaylistUpdatedEvent(
+                data=pev.PlaylistUpdatedEventData(playlist=pev.Playlist.map(playlist))
+            )
         )
-        updated_event = pev.PlaylistUpdatedEvent(
-            data=updated_event_data,
-        )
-        self._emit_event(updated_event)
 
     def _emit_playlist_deleted_event(self, playlist: m.Playlist) -> None:
-        mapped_playlist = pev.Playlist.map(playlist)
-        deleted_event_data = pev.PlaylistDeletedEventData(
-            playlist=mapped_playlist,
+        self._emit_event(
+            pev.PlaylistDeletedEvent(
+                data=pev.PlaylistDeletedEventData(playlist=pev.Playlist.map(playlist))
+            )
         )
-        deleted_event = pev.PlaylistDeletedEvent(
-            data=deleted_event_data,
-        )
-        self._emit_event(deleted_event)
 
     def _emit_binding_updated_event(self, binding: m.Binding) -> None:
-        mapped_binding = bev.Binding.map(binding)
-        updated_event_data = bev.BindingUpdatedEventData(
-            binding=mapped_binding,
+        self._emit_event(
+            bev.BindingUpdatedEvent(
+                data=bev.BindingUpdatedEventData(binding=bev.Binding.map(binding))
+            )
         )
-        updated_event = bev.BindingUpdatedEvent(
-            data=updated_event_data,
-        )
-        self._emit_event(updated_event)
 
     def _emit_binding_deleted_event(self, binding: m.Binding) -> None:
-        mapped_binding = bev.Binding.map(binding)
-        deleted_event_data = bev.BindingDeletedEventData(
-            binding=mapped_binding,
+        self._emit_event(
+            bev.BindingDeletedEvent(
+                data=bev.BindingDeletedEventData(binding=bev.Binding.map(binding))
+            )
         )
-        deleted_event = bev.BindingDeletedEvent(
-            data=deleted_event_data,
-        )
-        self._emit_event(deleted_event)
 
     @contextmanager
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
         except ge.DataError as ex:
-            raise e.ValidationError(str(ex)) from ex
+            raise e.ValidationError from ex
         except ge.ServiceError as ex:
-            raise e.GraphiteError(str(ex)) from ex
+            raise e.GraphiteError from ex
 
     async def count(self, request: m.CountRequest) -> m.CountResponse:
         """Count playlists."""
-        where = request.where
-
         with self._handle_errors():
-            count = await self._graphite.playlist.count(
-                where=where,
-            )
+            count = await self._graphite.playlist.count(where=request.where)
 
-        return m.CountResponse(
-            count=count,
-        )
+        return m.CountResponse(count=count)
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List all playlists."""
-        limit = request.limit
-        offset = request.offset
-        where = request.where
-        include = request.include
-        order = request.order
-
         with self._handle_errors():
             playlists = await self._graphite.playlist.find_many(
-                take=limit,
-                skip=offset,
-                where=where,
-                include=include,
-                order=list(order) if isinstance(order, Sequence) else order,
+                take=request.limit,
+                skip=request.offset,
+                where=request.where,
+                include=request.include,
+                order=list(request.order)
+                if isinstance(request.order, Sequence)
+                else request.order,
             )
 
-        return m.ListResponse(
-            playlists=playlists,
-        )
+        return m.ListResponse(playlists=playlists)
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get playlist."""
-        where = request.where
-        include = request.include
-
         with self._handle_errors():
             playlist = await self._graphite.playlist.find_unique(
-                where=where,
-                include=include,
+                where=request.where, include=request.include
             )
 
-        return m.GetResponse(
-            playlist=playlist,
-        )
+        return m.GetResponse(playlist=playlist)
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create playlist."""
-        data = request.data
-        include = request.include
-
         with self._handle_errors():
             playlist = await self._graphite.playlist.create(
-                data=cast("gt.PlaylistCreateInput", data),
-                include=include,
+                data=cast("gt.PlaylistCreateInput", request.data),
+                include=request.include,
             )
 
         self._emit_playlist_created_event(playlist)
 
-        return m.CreateResponse(
-            playlist=playlist,
-        )
+        return m.CreateResponse(playlist=playlist)
 
     async def _update_handle_bindings(
         self,
@@ -165,21 +123,11 @@ class PlaylistsService:
         bindings = []
 
         if new.id != old.id:
-            bindings = await transaction.binding.find_many(
-                where={
-                    "playlistId": old.id,
-                },
-            )
+            bindings = await transaction.binding.find_many(where={"playlistId": old.id})
 
             ids = [binding.id for binding in bindings]
 
-            await transaction.binding.delete_many(
-                where={
-                    "id": {
-                        "in": ids,
-                    },
-                },
-            )
+            await transaction.binding.delete_many(where={"id": {"in": ids}})
 
             await transaction.binding.create_many(
                 data=[
@@ -190,46 +138,30 @@ class PlaylistsService:
                         "rank": binding.rank,
                     }
                     for binding in bindings
-                ],
+                ]
             )
 
-            bindings = await transaction.binding.find_many(
-                where={
-                    "id": {
-                        "in": ids,
-                    },
-                },
-            )
+            bindings = await transaction.binding.find_many(where={"id": {"in": ids}})
 
         return bindings
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update playlist."""
-        data = request.data
-        where = request.where
-        include = request.include
-
         async with self._graphite.tx() as transaction:
             with self._handle_errors():
-                old = await transaction.playlist.find_unique(
-                    where=where,
-                )
+                old = await transaction.playlist.find_unique(where=request.where)
 
                 if old is None:
-                    return m.UpdateResponse(
-                        playlist=None,
-                    )
+                    return m.UpdateResponse(playlist=None)
 
                 new = await transaction.playlist.update(
-                    data=cast("gt.PlaylistUpdateInput", data),
-                    where=where,
-                    include=include,
+                    data=cast("gt.PlaylistUpdateInput", request.data),
+                    where=request.where,
+                    include=request.include,
                 )
 
                 if new is None:
-                    return m.UpdateResponse(
-                        playlist=None,
-                    )
+                    return m.UpdateResponse(playlist=None)
 
                 bindings = await self._update_handle_bindings(transaction, old, new)
 
@@ -237,9 +169,7 @@ class PlaylistsService:
         for binding in bindings:
             self._emit_binding_updated_event(binding)
 
-        return m.UpdateResponse(
-            playlist=new,
-        )
+        return m.UpdateResponse(playlist=new)
 
     async def _delete_handle_bindings(
         self,
@@ -247,37 +177,25 @@ class PlaylistsService:
         playlist: m.Playlist,
     ) -> builtins.list[m.Binding]:
         bindings = await transaction.binding.find_many(
-            where={
-                "playlistId": playlist.id,
-            },
+            where={"playlistId": playlist.id}
         )
 
         await transaction.binding.delete_many(
-            where={
-                "id": {
-                    "in": [binding.id for binding in bindings],
-                },
-            },
+            where={"id": {"in": [binding.id for binding in bindings]}}
         )
 
         return bindings
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete playlist."""
-        where = request.where
-        include = request.include
-
         async with self._graphite.tx() as transaction:
             with self._handle_errors():
                 playlist = await transaction.playlist.delete(
-                    where=where,
-                    include=include,
+                    where=request.where, include=request.include
                 )
 
                 if playlist is None:
-                    return m.DeleteResponse(
-                        playlist=None,
-                    )
+                    return m.DeleteResponse(playlist=None)
 
                 bindings = await self._delete_handle_bindings(transaction, playlist)
 
@@ -285,41 +203,21 @@ class PlaylistsService:
         for binding in bindings:
             self._emit_binding_deleted_event(binding)
 
-        return m.DeleteResponse(
-            playlist=playlist,
-        )
+        return m.DeleteResponse(playlist=playlist)
 
     async def m3u(self, request: m.M3URequest) -> m.M3UResponse:
         """Get playlist in M3U format."""
-        where = request.where
-        base = request.base
-
         with self._handle_errors():
             playlist = await self._graphite.playlist.find_unique(
-                where=where,
-                include={
-                    "bindings": {
-                        "order_by": {
-                            "rank": "asc",
-                        },
-                    },
-                },
+                where=request.where, include={"bindings": {"order_by": {"rank": "asc"}}}
             )
 
         if playlist is None:
-            return m.M3UResponse(
-                m3u=None,
-            )
+            return m.M3UResponse(m3u=None)
 
-        base = base.rstrip("/")
         urls = [
-            f"{base}/media/{binding.mediaId}/content"
+            f"{request.base.rstrip('/')}/media/{binding.mediaId}/content"
             for binding in playlist.bindings or []
         ]
 
-        m3u = M3U(urls)
-        m3u = str(m3u)
-
-        return m.M3UResponse(
-            m3u=m3u,
-        )
+        return m.M3UResponse(m3u=str(M3U(urls)))

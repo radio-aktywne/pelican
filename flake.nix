@@ -45,7 +45,6 @@
         trunk = pkgs.trunk-io;
         uv = pkgs.uv;
         cacert = pkgs.cacert;
-        copier = pkgs.python313.withPackages (ps: [ps.copier]);
         openssl = pkgs.openssl;
         usql = pkgs.usql;
         mc = pkgs.minio-client;
@@ -84,7 +83,6 @@
               trunk
               uv
               cacert
-              copier
               openssl
               usql
               mc

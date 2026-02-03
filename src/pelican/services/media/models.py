@@ -1,5 +1,3 @@
-# ruff: noqa: SLF001
-
 from collections.abc import Sequence
 
 from pelican.models.base import datamodel
@@ -17,17 +15,17 @@ MediaWhereInput = gt.MediaWhereInput
 
 MediaInclude = gt.MediaInclude
 
-MediaWhereUniqueIdInput = gt._MediaWhereUnique_id_Input
+MediaWhereUniqueIdInput = gt._MediaWhereUnique_id_Input  # noqa: SLF001
 
-MediaWhereUniqueNameInput = gt._MediaWhereUnique_name_Input
+MediaWhereUniqueNameInput = gt._MediaWhereUnique_name_Input  # noqa: SLF001
 
-MediaWhereUniqueInput = MediaWhereUniqueIdInput | MediaWhereUniqueNameInput
+type MediaWhereUniqueInput = MediaWhereUniqueIdInput | MediaWhereUniqueNameInput
 
-MediaOrderByIdInput = gt._Media_id_OrderByInput
+MediaOrderByIdInput = gt._Media_id_OrderByInput  # noqa: SLF001
 
-MediaOrderByNameInput = gt._Media_name_OrderByInput
+MediaOrderByNameInput = gt._Media_name_OrderByInput  # noqa: SLF001
 
-MediaOrderByInput = MediaOrderByIdInput | MediaOrderByNameInput
+type MediaOrderByInput = MediaOrderByIdInput | MediaOrderByNameInput
 
 MediaCreateInput = gt.MediaCreateWithoutRelationsInput
 

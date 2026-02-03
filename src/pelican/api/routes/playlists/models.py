@@ -1,9 +1,7 @@
-# pyright: reportIncompatibleVariableOverride=false
-
 from collections.abc import Sequence
 from uuid import UUID
 
-from pelican.models.base import SerializableModel, datamodel, serializable
+from pelican.models.base import SerializableModel, datamodel
 from pelican.services.playlists import models as pm
 
 
@@ -109,97 +107,73 @@ class PlaylistList(SerializableModel):
     """Playlists that matched the request."""
 
 
-@serializable
-class PlaylistWhereInput(pm.PlaylistWhereInput):
-    """Filter to apply to find playlists."""
+PlaylistWhereInput = pm.PlaylistWhereInput
 
+PlaylistWhereUniqueIdInput = pm.PlaylistWhereUniqueIdInput
 
-@serializable
-class PlaylistWhereUniqueIdInput(pm.PlaylistWhereUniqueIdInput):
-    """Filter to apply to find playlists by unique ID."""
+PlaylistWhereUniqueNameInput = pm.PlaylistWhereUniqueNameInput
 
+type PlaylistWhereUniqueInput = (
+    PlaylistWhereUniqueIdInput | PlaylistWhereUniqueNameInput
+)
 
-@serializable
-class PlaylistWhereUniqueNameInput(pm.PlaylistWhereUniqueNameInput):
-    """Filter to apply to find playlists by unique name."""
+PlaylistInclude = pm.PlaylistInclude
 
+PlaylistOrderByIdInput = pm.PlaylistOrderByIdInput
 
-PlaylistWhereUniqueInput = PlaylistWhereUniqueIdInput | PlaylistWhereUniqueNameInput
+PlaylistOrderByNameInput = pm.PlaylistOrderByNameInput
 
+type PlaylistOrderByInput = PlaylistOrderByIdInput | PlaylistOrderByNameInput
 
-@serializable
-class PlaylistInclude(pm.PlaylistInclude):
-    """Relations to include in the response."""
+PlaylistCreateInput = pm.PlaylistCreateInput
 
+PlaylistUpdateInput = pm.PlaylistUpdateInput
 
-@serializable
-class PlaylistOrderByIdInput(pm.PlaylistOrderByIdInput):
-    """Order by playlist ID."""
+type ListRequestLimit = int | None
 
+type ListRequestOffset = int | None
 
-@serializable
-class PlaylistOrderByNameInput(pm.PlaylistOrderByNameInput):
-    """Order by playlist name."""
+type ListRequestWhere = PlaylistWhereInput | None
 
+type ListRequestInclude = PlaylistInclude | None
 
-PlaylistOrderByInput = PlaylistOrderByIdInput | PlaylistOrderByNameInput
+type ListRequestOrder = PlaylistOrderByInput | Sequence[PlaylistOrderByInput] | None
 
+type ListResponseResults = PlaylistList
 
-@serializable
-class PlaylistCreateInput(pm.PlaylistCreateInput):
-    """Data to create a playlist."""
+type GetRequestId = UUID
 
+type GetRequestInclude = PlaylistInclude | None
 
-@serializable
-class PlaylistUpdateInput(pm.PlaylistUpdateInput):
-    """Data to update a playlist."""
+type GetResponsePlaylist = Playlist
 
+type CreateRequestData = PlaylistCreateInput
 
-ListRequestLimit = int | None
+type CreateRequestInclude = PlaylistInclude | None
 
-ListRequestOffset = int | None
+type CreateResponsePlaylist = Playlist
 
-ListRequestWhere = PlaylistWhereInput | None
+type UpdateRequestData = PlaylistUpdateInput
 
-ListRequestInclude = PlaylistInclude | None
+type UpdateRequestId = UUID
 
-ListRequestOrder = PlaylistOrderByInput | Sequence[PlaylistOrderByInput] | None
+type UpdateRequestInclude = PlaylistInclude | None
 
-ListResponseResults = PlaylistList
+type UpdateResponsePlaylist = Playlist
 
-GetRequestId = UUID
+type DeleteRequestId = UUID
 
-GetRequestInclude = PlaylistInclude | None
+type M3URequestId = UUID
 
-GetResponsePlaylist = Playlist
+type M3URequestBase = str
 
-CreateRequestData = PlaylistCreateInput
+type M3UResponseM3U = str
 
-CreateRequestInclude = PlaylistInclude | None
+type HeadM3URequestId = UUID
 
-CreateResponsePlaylist = Playlist
+type HeadM3URequestBase = str
 
-UpdateRequestData = PlaylistUpdateInput
-
-UpdateRequestId = UUID
-
-UpdateRequestInclude = PlaylistInclude | None
-
-UpdateResponsePlaylist = Playlist
-
-DeleteRequestId = UUID
-
-M3URequestId = UUID
-
-M3URequestBase = str
-
-M3UResponseM3U = str
-
-HeadM3URequestId = UUID
-
-HeadM3URequestBase = str
-
-HeadM3UResponseM3U = str
+type HeadM3UResponseM3U = str
 
 
 @datamodel

@@ -1,1 +1,5 @@
-from prisma import Prisma as GraphiteService  # noqa: F401
+from prisma import Prisma as GraphiteService
+
+__all__ = [
+    "GraphiteService",
+]

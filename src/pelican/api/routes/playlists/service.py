@@ -19,190 +19,110 @@ class Service:
         try:
             yield
         except pe.ValidationError as ex:
-            raise e.ValidationError(str(ex)) from ex
+            raise e.ValidationError from ex
         except pe.GraphiteError as ex:
-            raise e.GraphiteError(str(ex)) from ex
+            raise e.GraphiteError from ex
         except pe.ServiceError as ex:
-            raise e.ServiceError(str(ex)) from ex
+            raise e.ServiceError from ex
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List playlists."""
-        limit = request.limit
-        offset = request.offset
-        where = request.where
-        include = request.include
-        order = request.order
+        count_request = pm.CountRequest(where=request.where)
 
-        req = pm.CountRequest(
-            where=where,
+        with self._handle_errors():
+            count_response = await self._playlists.count(count_request)
+
+        list_request = pm.ListRequest(
+            limit=request.limit,
+            offset=request.offset,
+            where=request.where,
+            include=request.include,
+            order=request.order,
         )
 
         with self._handle_errors():
-            res = await self._playlists.count(req)
+            list_response = await self._playlists.list(list_request)
 
-        count = res.count
-
-        req = pm.ListRequest(
-            limit=limit,
-            offset=offset,
-            where=where,
-            include=include,
-            order=order,
-        )
-
-        with self._handle_errors():
-            res = await self._playlists.list(req)
-
-        playlists = res.playlists
-
-        playlists = [m.Playlist.map(p) for p in playlists]
-        results = m.PlaylistList(
-            count=count,
-            limit=limit,
-            offset=offset,
-            playlists=playlists,
-        )
         return m.ListResponse(
-            results=results,
+            results=m.PlaylistList(
+                count=count_response.count,
+                limit=request.limit,
+                offset=request.offset,
+                playlists=[
+                    m.Playlist.map(playlist) for playlist in list_response.playlists
+                ],
+            )
         )
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get playlist."""
-        playlist_id = request.id
-        include = request.include
-
-        req = pm.GetRequest(
-            where={
-                "id": str(playlist_id),
-            },
-            include=include,
+        get_request = pm.GetRequest(
+            where={"id": str(request.id)}, include=request.include
         )
 
         with self._handle_errors():
-            res = await self._playlists.get(req)
+            get_response = await self._playlists.get(get_request)
 
-        playlist = res.playlist
+        if get_response.playlist is None:
+            raise e.PlaylistNotFoundError(request.id)
 
-        if playlist is None:
-            raise e.PlaylistNotFoundError(playlist_id)
-
-        playlist = m.Playlist.map(playlist)
-        return m.GetResponse(
-            playlist=playlist,
-        )
+        return m.GetResponse(playlist=m.Playlist.map(get_response.playlist))
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create playlist."""
-        data = request.data
-        include = request.include
-
-        req = pm.CreateRequest(
-            data=data,
-            include=include,
-        )
+        create_request = pm.CreateRequest(data=request.data, include=request.include)
 
         with self._handle_errors():
-            res = await self._playlists.create(req)
+            create_response = await self._playlists.create(create_request)
 
-        playlist = res.playlist
-
-        playlist = m.Playlist.map(playlist)
-        return m.CreateResponse(
-            playlist=playlist,
-        )
+        return m.CreateResponse(playlist=m.Playlist.map(create_response.playlist))
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update playlist."""
-        data = request.data
-        playlist_id = request.id
-        include = request.include
-
-        req = pm.UpdateRequest(
-            data=data,
-            where={
-                "id": str(playlist_id),
-            },
-            include=include,
+        update_request = pm.UpdateRequest(
+            data=request.data, where={"id": str(request.id)}, include=request.include
         )
 
         with self._handle_errors():
-            res = await self._playlists.update(req)
+            update_response = await self._playlists.update(update_request)
 
-        playlist = res.playlist
+        if update_response.playlist is None:
+            raise e.PlaylistNotFoundError(request.id)
 
-        if playlist is None:
-            raise e.PlaylistNotFoundError(playlist_id)
-
-        playlist = m.Playlist.map(playlist)
-        return m.UpdateResponse(
-            playlist=playlist,
-        )
+        return m.UpdateResponse(playlist=m.Playlist.map(update_response.playlist))
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete playlist."""
-        playlist_id = request.id
-
-        req = pm.DeleteRequest(
-            where={
-                "id": str(playlist_id),
-            },
-            include=None,
-        )
+        delete_request = pm.DeleteRequest(where={"id": str(request.id)}, include=None)
 
         with self._handle_errors():
-            res = await self._playlists.delete(req)
+            delete_response = await self._playlists.delete(delete_request)
 
-        playlist = res.playlist
-
-        if playlist is None:
-            raise e.PlaylistNotFoundError(playlist_id)
+        if delete_response.playlist is None:
+            raise e.PlaylistNotFoundError(request.id)
 
         return m.DeleteResponse()
 
     async def m3u(self, request: m.M3URequest) -> m.M3UResponse:
         """Get playlist in M3U format."""
-        playlist_id = request.id
-        base = request.base
-
-        req = pm.M3URequest(
-            where={
-                "id": str(playlist_id),
-            },
-            base=base,
-        )
+        m3u_request = pm.M3URequest(where={"id": str(request.id)}, base=request.base)
 
         with self._handle_errors():
-            res = await self._playlists.m3u(req)
+            m3u_response = await self._playlists.m3u(m3u_request)
 
-        m3u = res.m3u
+        if m3u_response.m3u is None:
+            raise e.PlaylistNotFoundError(request.id)
 
-        if m3u is None:
-            raise e.PlaylistNotFoundError(playlist_id)
-
-        return m.M3UResponse(
-            m3u=m3u,
-        )
+        return m.M3UResponse(m3u=m3u_response.m3u)
 
     async def headm3u(self, request: m.HeadM3URequest) -> m.HeadM3UResponse:
         """Get headers for playlist in M3U format."""
-        playlist_id = request.id
-        base = request.base
-
-        req = pm.M3URequest(
-            where={
-                "id": str(playlist_id),
-            },
-            base=base,
-        )
+        m3u_request = pm.M3URequest(where={"id": str(request.id)}, base=request.base)
 
         with self._handle_errors():
-            res = await self._playlists.m3u(req)
+            m3u_response = await self._playlists.m3u(m3u_request)
 
-        m3u = res.m3u
+        if m3u_response.m3u is None:
+            raise e.PlaylistNotFoundError(request.id)
 
-        if m3u is None:
-            raise e.PlaylistNotFoundError(playlist_id)
-
-        return m.HeadM3UResponse(
-            m3u=m3u,
-        )
+        return m.HeadM3UResponse(m3u=m3u_response.m3u)
