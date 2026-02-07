@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Self
 from uuid import UUID
 
 from pydantic import Field
@@ -18,13 +18,10 @@ class Media(SerializableModel):
     name: str
     """Name of the media."""
 
-    @staticmethod
-    def map(media: mm.Media) -> "Media":
+    @classmethod
+    def map(cls, media: mm.Media) -> Self:
         """Map to internal representation."""
-        return Media(
-            id=UUID(media.id),
-            name=media.name,
-        )
+        return cls(id=UUID(media.id), name=media.name)
 
 
 class MediaCreatedEventData(SerializableModel):

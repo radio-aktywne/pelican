@@ -24,7 +24,7 @@ class PlaylistsService:
         self._channels = channels
 
     def _emit_event(self, event: Event) -> None:
-        data = event.model_dump_json(by_alias=True)
+        data = event.model_dump_json(round_trip=True)
         self._channels.publish(data, "events")
 
     def _emit_playlist_created_event(self, playlist: m.Playlist) -> None:

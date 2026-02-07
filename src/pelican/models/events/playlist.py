@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Self
 from uuid import UUID
 
 from pydantic import Field
@@ -18,13 +18,10 @@ class Playlist(SerializableModel):
     name: str
     """Name of the playlist."""
 
-    @staticmethod
-    def map(playlist: pm.Playlist) -> "Playlist":
+    @classmethod
+    def map(cls, playlist: pm.Playlist) -> Self:
         """Map to internal representation."""
-        return Playlist(
-            id=UUID(playlist.id),
-            name=playlist.name,
-        )
+        return cls(id=UUID(playlist.id), name=playlist.name)
 
 
 class PlaylistCreatedEventData(SerializableModel):

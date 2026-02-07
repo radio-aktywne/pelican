@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Self
 from uuid import UUID
 
 from pydantic import Field
@@ -24,10 +24,10 @@ class Binding(SerializableModel):
     rank: str
     """Rank of the media in the binding."""
 
-    @staticmethod
-    def map(binding: bm.Binding) -> "Binding":
+    @classmethod
+    def map(cls, binding: bm.Binding) -> Self:
         """Map to internal representation."""
-        return Binding(
+        return cls(
             id=UUID(binding.id),
             playlist_id=UUID(binding.playlistId),
             media_id=UUID(binding.mediaId),

@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from typing import Self
 from uuid import UUID
 
 from pelican.models.base import SerializableModel, datamodel
@@ -26,10 +27,10 @@ class Binding(SerializableModel):
     media: "Media | None"
     """Media that the binding belongs to."""
 
-    @staticmethod
-    def map(binding: pm.Binding) -> "Binding":
+    @classmethod
+    def map(cls, binding: pm.Binding) -> Self:
         """Map to internal representation."""
-        return Binding(
+        return cls(
             id=UUID(binding.id),
             playlist_id=UUID(binding.playlistId),
             media_id=UUID(binding.mediaId),
@@ -51,10 +52,10 @@ class Media(SerializableModel):
     bindings: Sequence[Binding] | None
     """Bindings that the media belongs to."""
 
-    @staticmethod
-    def map(media: pm.Media) -> "Media":
+    @classmethod
+    def map(cls, media: pm.Media) -> Self:
         """Map to internal representation."""
-        return Media(
+        return cls(
             id=UUID(media.id),
             name=media.name,
             bindings=(
@@ -77,10 +78,10 @@ class Playlist(SerializableModel):
     bindings: Sequence[Binding] | None
     """Bindings that the playlist belongs to."""
 
-    @staticmethod
-    def map(playlist: pm.Playlist) -> "Playlist":
+    @classmethod
+    def map(cls, playlist: pm.Playlist) -> Self:
         """Map to internal representation."""
-        return Playlist(
+        return cls(
             id=UUID(playlist.id),
             name=playlist.name,
             bindings=(
