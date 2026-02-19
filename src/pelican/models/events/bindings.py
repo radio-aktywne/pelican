@@ -4,7 +4,8 @@ from uuid import UUID
 from pydantic import Field
 
 from pelican.models.base import SerializableModel
-from pelican.models.events import types as t
+from pelican.models.events.enums import EventType
+from pelican.models.events.fields import CreatedAtField, DataField, TypeField
 from pelican.services.bindings import models as bm
 from pelican.utils.time import naiveutcnow
 
@@ -45,9 +46,9 @@ class BindingCreatedEventData(SerializableModel):
 class BindingCreatedEvent(SerializableModel):
     """Event that is emitted when binding is created."""
 
-    type: t.TypeField[Literal["binding-created"]] = "binding-created"
-    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
-    data: t.DataField[BindingCreatedEventData]
+    type: TypeField[Literal[EventType.BINDING_CREATED]] = EventType.BINDING_CREATED
+    created_at: CreatedAtField = Field(default_factory=naiveutcnow)
+    data: DataField[BindingCreatedEventData]
 
 
 class BindingUpdatedEventData(SerializableModel):
@@ -60,9 +61,9 @@ class BindingUpdatedEventData(SerializableModel):
 class BindingUpdatedEvent(SerializableModel):
     """Event that is emitted when binding is updated."""
 
-    type: t.TypeField[Literal["binding-updated"]] = "binding-updated"
-    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
-    data: t.DataField[BindingUpdatedEventData]
+    type: TypeField[Literal[EventType.BINDING_UPDATED]] = EventType.BINDING_UPDATED
+    created_at: CreatedAtField = Field(default_factory=naiveutcnow)
+    data: DataField[BindingUpdatedEventData]
 
 
 class BindingDeletedEventData(SerializableModel):
@@ -75,6 +76,6 @@ class BindingDeletedEventData(SerializableModel):
 class BindingDeletedEvent(SerializableModel):
     """Event that is emitted when binding is deleted."""
 
-    type: t.TypeField[Literal["binding-deleted"]] = "binding-deleted"
-    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
-    data: t.DataField[BindingDeletedEventData]
+    type: TypeField[Literal[EventType.BINDING_DELETED]] = EventType.BINDING_DELETED
+    created_at: CreatedAtField = Field(default_factory=naiveutcnow)
+    data: DataField[BindingDeletedEventData]

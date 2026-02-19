@@ -1,12 +1,17 @@
 from collections.abc import AsyncIterator
+from collections.abc import Set as AbstractSet
 
 from pelican.models.base import datamodel
-from pelican.models.events.event import Event
+from pelican.models.events.enums import EventType
+from pelican.models.events.types import Event
 
 
 @datamodel
 class SubscribeRequest:
     """Request to subscribe."""
+
+    types: AbstractSet[EventType] | None = None
+    """Types of events to subscribe to."""
 
 
 @datamodel

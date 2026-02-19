@@ -5,9 +5,9 @@ from typing import cast
 
 from litestar.channels import ChannelsPlugin
 
-from pelican.models.events import binding as bev
-from pelican.models.events import playlist as pev
-from pelican.models.events.event import Event
+from pelican.models.events import bindings as bev
+from pelican.models.events import playlists as pev
+from pelican.models.events.types import Event
 from pelican.services.graphite import errors as ge
 from pelican.services.graphite import types as gt
 from pelican.services.graphite.service import GraphiteService

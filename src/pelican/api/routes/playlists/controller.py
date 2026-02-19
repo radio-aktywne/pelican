@@ -6,10 +6,8 @@ from litestar import Request, handlers
 from litestar.channels import ChannelsPlugin
 from litestar.datastructures import ResponseHeader
 from litestar.di import Provide
-from litestar.openapi import ResponseSpec
 from litestar.params import Body, Parameter
 from litestar.response import Response
-from litestar.status_codes import HTTP_200_OK, HTTP_204_NO_CONTENT
 
 from pelican.api.exceptions import BadRequestException, NotFoundException
 from pelican.api.routes.playlists import errors as e
@@ -42,6 +40,7 @@ class Controller(BaseController):
 
     @handlers.get(
         summary="List playlists",
+        raises=[BadRequestException],
     )
     async def list(  # noqa: PLR0913
         self,
@@ -96,6 +95,7 @@ class Controller(BaseController):
     @handlers.get(
         "/{id:str}",
         summary="Get playlist",
+        raises=[BadRequestException, NotFoundException],
     )
     async def get(
         self,
@@ -127,6 +127,7 @@ class Controller(BaseController):
 
     @handlers.post(
         summary="Create playlist",
+        raises=[BadRequestException],
     )
     async def create(
         self,
@@ -159,6 +160,7 @@ class Controller(BaseController):
     @handlers.patch(
         "/{id:str}",
         summary="Update playlist",
+        raises=[BadRequestException, NotFoundException],
     )
     async def update(
         self,
@@ -201,11 +203,7 @@ class Controller(BaseController):
     @handlers.delete(
         "/{id:str}",
         summary="Delete playlist",
-        responses={
-            HTTP_204_NO_CONTENT: ResponseSpec(
-                None, description="Request fulfilled, nothing follows"
-            )
-        },
+        raises=[BadRequestException, NotFoundException],
     )
     async def delete(
         self,
@@ -216,7 +214,7 @@ class Controller(BaseController):
                 description="Identifier of the playlist to delete.",
             ),
         ],
-    ) -> Response[None]:
+    ) -> None:
         """Delete a playlist by ID."""
         request = m.DeleteRequest(id=id.root)
 
@@ -227,19 +225,18 @@ class Controller(BaseController):
         except e.PlaylistNotFoundError as ex:
             raise NotFoundException from ex
 
-        return Response(None)
-
     @handlers.get(
         "/{id:str}/m3u",
         summary="Get playlist in M3U format",
-        media_type="audio/mpegurl",
         response_headers=[
             ResponseHeader(
                 name="Content-Type",
-                description="Content type.",
                 value="audio/mpegurl",
+                required=True,
             ),
         ],
+        media_type="audio/mpegurl",
+        raises=[BadRequestException, NotFoundException],
     )
     async def m3u(
         self,
@@ -267,18 +264,15 @@ class Controller(BaseController):
     @handlers.head(
         "/{id:str}/m3u",
         summary="Get headers for playlist in M3U format",
+        response_description="Request fulfilled, headers follow",
         response_headers=[
             ResponseHeader(
                 name="Content-Type",
-                description="Content type.",
                 value="audio/mpegurl",
+                required=True,
             ),
         ],
-        responses={
-            HTTP_200_OK: ResponseSpec(
-                None, description="Request fulfilled, nothing follows"
-            )
-        },
+        raises=[BadRequestException, NotFoundException],
     )
     async def headm3u(
         self,
@@ -290,7 +284,7 @@ class Controller(BaseController):
             ),
         ],
         request: Request,
-    ) -> Response[None]:
+    ) -> None:
         """Get headers for a playlist in M3U format."""
         req = m.HeadM3URequest(id=id.root, base=str(request.base_url))
 
@@ -300,5 +294,3 @@ class Controller(BaseController):
             raise BadRequestException from ex
         except e.PlaylistNotFoundError as ex:
             raise NotFoundException from ex
-
-        return Response(None)

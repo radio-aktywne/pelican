@@ -5,10 +5,8 @@ from litestar import Controller as BaseController
 from litestar import handlers
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
-from litestar.openapi import ResponseSpec
 from litestar.params import Body, Parameter
 from litestar.response import Response
-from litestar.status_codes import HTTP_204_NO_CONTENT
 
 from pelican.api.exceptions import BadRequestException, NotFoundException
 from pelican.api.routes.bindings import errors as e
@@ -41,6 +39,7 @@ class Controller(BaseController):
 
     @handlers.get(
         summary="List bindings",
+        raises=[BadRequestException],
     )
     async def list(  # noqa: PLR0913
         self,
@@ -95,6 +94,7 @@ class Controller(BaseController):
     @handlers.get(
         "/{id:str}",
         summary="Get binding",
+        raises=[BadRequestException, NotFoundException],
     )
     async def get(
         self,
@@ -126,6 +126,7 @@ class Controller(BaseController):
 
     @handlers.post(
         summary="Create binding",
+        raises=[BadRequestException],
     )
     async def create(
         self,
@@ -158,6 +159,7 @@ class Controller(BaseController):
     @handlers.patch(
         "/{id:str}",
         summary="Update binding",
+        raises=[BadRequestException, NotFoundException],
     )
     async def update(
         self,
@@ -198,11 +200,7 @@ class Controller(BaseController):
     @handlers.delete(
         "/{id:str}",
         summary="Delete binding",
-        responses={
-            HTTP_204_NO_CONTENT: ResponseSpec(
-                None, description="Request fulfilled, nothing follows"
-            )
-        },
+        raises=[BadRequestException, NotFoundException],
     )
     async def delete(
         self,
@@ -213,7 +211,7 @@ class Controller(BaseController):
                 description="Identifier of the binding to delete.",
             ),
         ],
-    ) -> Response[None]:
+    ) -> None:
         """Delete a binding by ID."""
         request = m.DeleteRequest(id=id.root)
 
@@ -223,5 +221,3 @@ class Controller(BaseController):
             raise BadRequestException from ex
         except e.BindingNotFoundError as ex:
             raise NotFoundException from ex
-
-        return Response(None)

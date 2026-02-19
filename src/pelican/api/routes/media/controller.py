@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator, Mapping
-from typing import Annotated
+from dataclasses import dataclass
+from typing import Annotated, cast
 
 from litestar import Controller as BaseController
 from litestar import Request, handlers
@@ -7,7 +8,15 @@ from litestar.channels import ChannelsPlugin
 from litestar.datastructures import ResponseHeader
 from litestar.di import Provide
 from litestar.exceptions import InternalServerException
-from litestar.openapi import ResponseSpec
+from litestar.openapi.spec import (
+    OpenAPIFormat,
+    OpenAPIMediaType,
+    OpenAPIResponse,
+    OpenAPIType,
+    Operation,
+    RequestBody,
+    Schema,
+)
 from litestar.params import Body, Parameter
 from litestar.response import Response, Stream
 from litestar.status_codes import HTTP_200_OK, HTTP_204_NO_CONTENT
@@ -20,6 +29,40 @@ from pelican.models.base import Jsonable, Serializable
 from pelican.services.media.service import MediaService
 from pelican.state import State
 from pelican.utils.time import httpstringify
+
+
+@dataclass
+class UploadOperation(Operation):
+    """OpenAPI Operation for uploading media content by ID."""
+
+    def __post_init__(self) -> None:
+        self.request_body = RequestBody(
+            content={
+                "*/*": OpenAPIMediaType(
+                    schema=Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.BINARY)
+                )
+            },
+            required=True,
+        )
+
+
+@dataclass
+class DownloadOperation(Operation):
+    """OpenAPI Operation for downloading media content by ID."""
+
+    def __post_init__(self) -> None:
+        if (
+            self.responses
+            and str(HTTP_200_OK) in self.responses
+            and (response := self.responses[str(HTTP_200_OK)])
+            and isinstance(response, OpenAPIResponse)
+            and (content := response.content)
+            and "*/*" in content
+            and (schema := content["*/*"].schema)
+            and isinstance(schema, Schema)
+        ):
+            schema.type = OpenAPIType.STRING
+            schema.format = OpenAPIFormat.BINARY
 
 
 class DependenciesBuilder:
@@ -46,6 +89,7 @@ class Controller(BaseController):
 
     @handlers.get(
         summary="List media",
+        raises=[BadRequestException],
     )
     async def list(  # noqa: PLR0913
         self,
@@ -100,6 +144,7 @@ class Controller(BaseController):
     @handlers.get(
         "/{id:str}",
         summary="Get media",
+        raises=[BadRequestException, NotFoundException],
     )
     async def get(
         self,
@@ -131,6 +176,7 @@ class Controller(BaseController):
 
     @handlers.post(
         summary="Create media",
+        raises=[BadRequestException],
     )
     async def create(
         self,
@@ -163,6 +209,7 @@ class Controller(BaseController):
     @handlers.patch(
         "/{id:str}",
         summary="Update media",
+        raises=[BadRequestException, NotFoundException],
     )
     async def update(
         self,
@@ -203,11 +250,7 @@ class Controller(BaseController):
     @handlers.delete(
         "/{id:str}",
         summary="Delete media",
-        responses={
-            HTTP_204_NO_CONTENT: ResponseSpec(
-                None, description="Request fulfilled, nothing follows"
-            )
-        },
+        raises=[BadRequestException, NotFoundException],
     )
     async def delete(
         self,
@@ -218,7 +261,7 @@ class Controller(BaseController):
                 description="Identifier of the media to delete.",
             ),
         ],
-    ) -> Response[None]:
+    ) -> None:
         """Delete media by ID."""
         request = m.DeleteRequest(id=id.root)
 
@@ -229,17 +272,12 @@ class Controller(BaseController):
         except e.MediaNotFoundError as ex:
             raise NotFoundException from ex
 
-        return Response(None)
-
     @handlers.put(
         "/{id:str}/content",
         summary="Upload media content",
         status_code=HTTP_204_NO_CONTENT,
-        responses={
-            HTTP_204_NO_CONTENT: ResponseSpec(
-                None, description="Request fulfilled, nothing follows"
-            )
-        },
+        raises=[BadRequestException, NotFoundException],
+        operation_class=UploadOperation,
     )
     async def upload(
         self,
@@ -258,7 +296,7 @@ class Controller(BaseController):
             ),
         ],
         request: Request,
-    ) -> Response[None]:
+    ) -> None:
         """Upload media content by ID."""
 
         async def _stream(request: Request) -> AsyncGenerator[bytes]:
@@ -282,41 +320,35 @@ class Controller(BaseController):
         except e.ContentNotFoundError as ex:
             raise NotFoundException from ex
 
-        return Response(None)
-
     @handlers.get(
         "/{id:str}/content",
         summary="Download media content",
+        status_code=HTTP_200_OK,
         response_headers=[
             ResponseHeader(
                 name="Content-Type",
-                description="Content type.",
+                required=True,
                 documentation_only=True,
             ),
             ResponseHeader(
                 name="Content-Length",
-                description="Content length.",
+                required=True,
                 documentation_only=True,
             ),
             ResponseHeader(
                 name="ETag",
-                description="Entity tag.",
+                required=True,
                 documentation_only=True,
             ),
             ResponseHeader(
                 name="Last-Modified",
-                description="Last modified.",
+                required=True,
                 documentation_only=True,
             ),
         ],
-        responses={
-            HTTP_200_OK: ResponseSpec(
-                Stream,
-                description="Request fulfilled, stream follows",
-                generate_examples=False,
-                media_type="*/*",
-            )
-        },
+        media_type="*/*",
+        raises=[BadRequestException, NotFoundException],
+        operation_class=DownloadOperation,
     )
     async def download(
         self,
@@ -353,33 +385,30 @@ class Controller(BaseController):
     @handlers.head(
         "/{id:str}/content",
         summary="Get media content headers",
+        response_description="Request fulfilled, headers follow",
         response_headers=[
             ResponseHeader(
                 name="Content-Type",
-                description="Content type.",
+                required=True,
                 documentation_only=True,
             ),
             ResponseHeader(
                 name="Content-Length",
-                description="Content length.",
+                required=True,
                 documentation_only=True,
             ),
             ResponseHeader(
                 name="ETag",
-                description="Entity tag.",
+                required=True,
                 documentation_only=True,
             ),
             ResponseHeader(
                 name="Last-Modified",
-                description="Last modified.",
+                required=True,
                 documentation_only=True,
             ),
         ],
-        responses={
-            HTTP_200_OK: ResponseSpec(
-                None, description="Request fulfilled, nothing follows"
-            )
-        },
+        raises=[BadRequestException, NotFoundException],
     )
     async def headdownload(
         self,
@@ -390,7 +419,7 @@ class Controller(BaseController):
                 description="Identifier of the media to get content headers for.",
             ),
         ],
-    ) -> Response[None]:
+    ) -> None:
         """Get media content headers by ID."""
         request = m.DownloadRequest(id=id.root)
 
@@ -403,12 +432,15 @@ class Controller(BaseController):
         except e.ContentNotFoundError as ex:
             raise NotFoundException from ex
 
-        return Response(
-            None,
-            headers={
-                "Content-Type": response.type,
-                "Content-Length": str(response.size),
-                "ETag": response.tag,
-                "Last-Modified": httpstringify(response.modified),
-            },
+        return cast(
+            "None",
+            Response(
+                None,
+                headers={
+                    "Content-Type": response.type,
+                    "Content-Length": str(response.size),
+                    "ETag": response.tag,
+                    "Last-Modified": httpstringify(response.modified),
+                },
+            ),
         )
