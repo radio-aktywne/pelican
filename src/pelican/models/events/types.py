@@ -2,20 +2,18 @@ from typing import Annotated
 
 from pydantic import Field
 
-from pelican.models.base import SerializableModel
-from pelican.utils.time import NaiveDatetime
+from pelican.models.events import bindings, media, playlists, test
 
-type TypeField[T] = Annotated[
-    T,
-    Field(description="Type of the event."),
-]
-
-type CreatedAtField = Annotated[
-    NaiveDatetime,
-    Field(description="Datetime in UTC at which the event was created."),
-]
-
-type DataField[T: SerializableModel] = Annotated[
-    T,
-    Field(description="Data of the event."),
+type Event = Annotated[
+    test.TestEvent
+    | bindings.BindingCreatedEvent
+    | bindings.BindingUpdatedEvent
+    | bindings.BindingDeletedEvent
+    | media.MediaCreatedEvent
+    | media.MediaUpdatedEvent
+    | media.MediaDeletedEvent
+    | playlists.PlaylistCreatedEvent
+    | playlists.PlaylistUpdatedEvent
+    | playlists.PlaylistDeletedEvent,
+    Field(discriminator="type"),
 ]

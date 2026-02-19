@@ -5,8 +5,8 @@ from typing import cast
 from fractional_indexing import FIError, validate_order_key
 from litestar.channels import ChannelsPlugin
 
-from pelican.models.events import binding as ev
-from pelican.models.events.event import Event
+from pelican.models.events import bindings as ev
+from pelican.models.events.types import Event
 from pelican.services.bindings import errors as e
 from pelican.services.bindings import models as m
 from pelican.services.graphite import errors as ge

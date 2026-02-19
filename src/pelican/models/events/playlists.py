@@ -4,7 +4,8 @@ from uuid import UUID
 from pydantic import Field
 
 from pelican.models.base import SerializableModel
-from pelican.models.events import types as t
+from pelican.models.events.enums import EventType
+from pelican.models.events.fields import CreatedAtField, DataField, TypeField
 from pelican.services.playlists import models as pm
 from pelican.utils.time import naiveutcnow
 
@@ -34,9 +35,9 @@ class PlaylistCreatedEventData(SerializableModel):
 class PlaylistCreatedEvent(SerializableModel):
     """Event that is emitted when playlist is created."""
 
-    type: t.TypeField[Literal["playlist-created"]] = "playlist-created"
-    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
-    data: t.DataField[PlaylistCreatedEventData]
+    type: TypeField[Literal[EventType.PLAYLIST_CREATED]] = EventType.PLAYLIST_CREATED
+    created_at: CreatedAtField = Field(default_factory=naiveutcnow)
+    data: DataField[PlaylistCreatedEventData]
 
 
 class PlaylistUpdatedEventData(SerializableModel):
@@ -49,9 +50,9 @@ class PlaylistUpdatedEventData(SerializableModel):
 class PlaylistUpdatedEvent(SerializableModel):
     """Event that is emitted when playlist is updated."""
 
-    type: t.TypeField[Literal["playlist-updated"]] = "playlist-updated"
-    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
-    data: t.DataField[PlaylistUpdatedEventData]
+    type: TypeField[Literal[EventType.PLAYLIST_UPDATED]] = EventType.PLAYLIST_UPDATED
+    created_at: CreatedAtField = Field(default_factory=naiveutcnow)
+    data: DataField[PlaylistUpdatedEventData]
 
 
 class PlaylistDeletedEventData(SerializableModel):
@@ -64,6 +65,6 @@ class PlaylistDeletedEventData(SerializableModel):
 class PlaylistDeletedEvent(SerializableModel):
     """Event that is emitted when playlist is deleted."""
 
-    type: t.TypeField[Literal["playlist-deleted"]] = "playlist-deleted"
-    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
-    data: t.DataField[PlaylistDeletedEventData]
+    type: TypeField[Literal[EventType.PLAYLIST_DELETED]] = EventType.PLAYLIST_DELETED
+    created_at: CreatedAtField = Field(default_factory=naiveutcnow)
+    data: DataField[PlaylistDeletedEventData]
