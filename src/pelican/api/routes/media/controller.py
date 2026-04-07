@@ -375,7 +375,7 @@ class Controller(BaseController):
         return Stream(
             response.data,
             headers={
-                "Content-Type": response.type,
+                "Content-Type": str(response.type),
                 "Content-Length": str(response.size),
                 "ETag": response.tag,
                 "Last-Modified": httpstringify(response.modified),
@@ -437,7 +437,7 @@ class Controller(BaseController):
             Response(
                 None,
                 headers={
-                    "Content-Type": response.type,
+                    "Content-Type": str(response.type),
                     "Content-Length": str(response.size),
                     "ETag": response.tag,
                     "Last-Modified": httpstringify(response.modified),

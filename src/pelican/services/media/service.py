@@ -12,9 +12,11 @@ from pelican.services.graphite import types as gt
 from pelican.services.graphite.service import GraphiteService
 from pelican.services.media import errors as e
 from pelican.services.media import models as m
+from pelican.services.media.utils import ContentTypeChecker
 from pelican.services.minium import errors as me
 from pelican.services.minium import models as mm
 from pelican.services.minium.service import MiniumService
+from pelican.utils.mime import MimeType, MimeTypeValidationError
 
 
 class MediaService:
@@ -225,6 +227,9 @@ class MediaService:
 
     async def upload(self, request: m.UploadRequest) -> m.UploadResponse:
         """Upload media content."""
+        if not ContentTypeChecker().check(request.content.type):
+            raise e.UnsupportedContentTypeError(request.content.type)
+
         with self._handle_errors():
             media = await self._graphite.media.find_unique(
                 where=request.where, include=request.include
@@ -233,7 +238,12 @@ class MediaService:
             if media is None:
                 return m.UploadResponse(media=None)
 
-            upload_request = mm.UploadRequest(name=media.id, content=request.content)
+            upload_request = mm.UploadRequest(
+                name=media.id,
+                content=mm.UploadContent(
+                    type=str(request.content.type), data=request.content.data
+                ),
+            )
             await self._minium.upload(upload_request)
 
         return m.UploadResponse(media=media)
@@ -255,5 +265,19 @@ class MediaService:
                 content = download_response.content
             except me.NotFoundError:
                 return m.DownloadResponse(media=media, content=None)
+
+        try:
+            content = m.DownloadContent(
+                type=MimeType.parse(content.type),
+                size=content.size,
+                tag=content.tag,
+                modified=content.modified,
+                data=content.data,
+            )
+        except MimeTypeValidationError:
+            return m.DownloadResponse(media=media, content=None)
+
+        if not ContentTypeChecker().check(content.type):
+            return m.DownloadResponse(media=media, content=None)
 
         return m.DownloadResponse(media=media, content=content)
