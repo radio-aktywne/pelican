@@ -23,7 +23,7 @@ to send a `POST` request to the `/media` endpoint:
 curl \
     --request POST \
     --header "Content-Type: application/json" \
-    --data '{"name": "My Media"}' \
+    --data '{"name": "Media"}' \
     http://localhost:10200/media
 ```
 
@@ -38,9 +38,9 @@ streaming the content from a file:
 ```sh
 curl \
     --request PUT \
-    --header "Content-Type: audio/mpeg" \
+    --header "Content-Type: audio/ogg" \
     --header "Transfer-Encoding: chunked" \
-    --upload-file my-media.mp3 \
+    --upload-file media.opus \
     http://localhost:10200/media/d06997da-6072-4a06-b7d4-6dd46cbbf716/content
 ```
 
@@ -51,7 +51,7 @@ and save the response body to a file:
 ```sh
 curl \
     --request GET \
-    --output my-media.mp3 \
+    --output media.opus \
     http://localhost:10200/media/d06997da-6072-4a06-b7d4-6dd46cbbf716/content
 ```
 
@@ -66,7 +66,7 @@ to send a `GET` request and save the response body to a file:
 ```sh
 curl \
     --request GET \
-    --output my-playlist.m3u \
+    --output playlist.m3u \
     http://localhost:10200/playlists/944f57ed-56eb-43a4-bc80-0667b9f0c1e7/m3u
 ```
 

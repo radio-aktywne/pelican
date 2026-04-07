@@ -5,6 +5,7 @@ from uuid import UUID
 
 from pelican.models.base import SerializableModel, datamodel
 from pelican.services.media import models as mm
+from pelican.utils.mime import MimeType
 
 
 class Binding(SerializableModel):
@@ -165,13 +166,13 @@ type DeleteRequestId = UUID
 
 type UploadRequestId = UUID
 
-type UploadRequestType = str
+type UploadRequestType = MimeType
 
 type UploadRequestData = AsyncIterator[bytes]
 
 type DownloadRequestId = UUID
 
-type DownloadResponseType = str
+type DownloadResponseType = MimeType
 
 type DownloadResponseSize = int
 
@@ -183,7 +184,7 @@ type DownloadResponseData = AsyncIterator[bytes]
 
 type HeadDownloadRequestId = UUID
 
-type HeadDownloadResponseType = str
+type HeadDownloadResponseType = MimeType
 
 type HeadDownloadResponseSize = int
 

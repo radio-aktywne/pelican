@@ -1,9 +1,10 @@
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
+from datetime import datetime
 
 from pelican.models.base import datamodel
 from pelican.services.graphite import models as gm
 from pelican.services.graphite import types as gt
-from pelican.services.minium import models as mm
+from pelican.utils.mime import MimeType
 
 Binding = gm.Binding
 
@@ -31,9 +32,36 @@ MediaCreateInput = gt.MediaCreateWithoutRelationsInput
 
 MediaUpdateInput = gt.MediaUpdateManyMutationInput
 
-UploadContent = mm.UploadContent
 
-DownloadContent = mm.DownloadContent
+@datamodel
+class UploadContent:
+    """Content model for upload."""
+
+    type: MimeType
+    """Content type."""
+
+    data: AsyncIterator[bytes]
+    """Asynchronous iterator of data bytes."""
+
+
+@datamodel
+class DownloadContent:
+    """Content model for download."""
+
+    type: MimeType
+    """Content type."""
+
+    size: int
+    """Size of the content in bytes."""
+
+    tag: str
+    """ETag of the content."""
+
+    modified: datetime
+    """Date and time when the content was last modified."""
+
+    data: AsyncIterator[bytes]
+    """Asynchronous iterator of data bytes."""
 
 
 @datamodel
