@@ -109,15 +109,15 @@ class MimeTypeSerializer:
     """Serializer for MIME types."""
 
     class PATTERNS:
-        SPECIAL = re.compile(r"(?P<special>[\"(),/:;<=>?@[\\\]])")
+        UNQUOTED = re.compile(r"^[\w!#$%&'*+\-.\^_`{|}~]+$")
         ESCAPE = re.compile(r"(?P<escape>[\"\\])")
 
     def serialize(self, value: MimeType) -> str:
         """Serialize a MIME type."""
         parameters = [
-            f'{k}="{self.PATTERNS.ESCAPE.sub(r"\\\g<escape>", v)}"'
-            if self.PATTERNS.SPECIAL.search(v) or not v
-            else f"{k}={v}"
+            f"{k}={v}"
+            if self.PATTERNS.UNQUOTED.fullmatch(v)
+            else f'{k}="{self.PATTERNS.ESCAPE.sub(r"\\\g<escape>", v)}"'
             for k, v in value.parameters.items()
         ]
 
