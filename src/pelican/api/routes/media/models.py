@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator, Sequence
+from collections.abc import AsyncGenerator, AsyncIterator, Sequence
 from datetime import datetime
 from typing import Self
 from uuid import UUID
@@ -180,7 +180,7 @@ type DownloadResponseTag = str
 
 type DownloadResponseModified = datetime
 
-type DownloadResponseData = AsyncIterator[bytes]
+type DownloadResponseData = AsyncGenerator[bytes]
 
 type HeadDownloadRequestId = UUID
 
