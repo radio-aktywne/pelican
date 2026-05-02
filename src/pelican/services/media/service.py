@@ -261,23 +261,27 @@ class MediaService:
             try:
                 download_request = mm.DownloadRequest(name=media.id)
                 download_response = await self._minium.download(download_request)
-
-                content = download_response.content
             except me.NotFoundError:
                 return m.DownloadResponse(media=media, content=None)
 
         try:
-            content = m.DownloadContent(
-                type=MimeType.parse(content.type),
-                size=content.size,
-                tag=content.tag,
-                modified=content.modified,
-                data=content.data,
-            )
-        except MimeTypeValidationError:
-            return m.DownloadResponse(media=media, content=None)
+            try:
+                content = m.DownloadContent(
+                    type=MimeType.parse(download_response.content.type),
+                    size=download_response.content.size,
+                    tag=download_response.content.tag,
+                    modified=download_response.content.modified,
+                    data=download_response.content.data,
+                )
+            except MimeTypeValidationError:
+                await download_response.content.data.aclose()
+                return m.DownloadResponse(media=media, content=None)
 
-        if not ContentTypeChecker().check(content.type):
-            return m.DownloadResponse(media=media, content=None)
+            if not ContentTypeChecker().check(content.type):
+                await download_response.content.data.aclose()
+                return m.DownloadResponse(media=media, content=None)
 
-        return m.DownloadResponse(media=media, content=content)
+            return m.DownloadResponse(media=media, content=content)
+        except:
+            await download_response.content.data.aclose()
+            raise

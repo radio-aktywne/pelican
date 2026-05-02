@@ -134,13 +134,17 @@ class Service:
         if download_response.content is None:
             raise e.ContentNotFoundError(request.id)
 
-        return m.DownloadResponse(
-            type=download_response.content.type,
-            size=download_response.content.size,
-            tag=download_response.content.tag,
-            modified=download_response.content.modified,
-            data=download_response.content.data,
-        )
+        try:
+            return m.DownloadResponse(
+                type=download_response.content.type,
+                size=download_response.content.size,
+                tag=download_response.content.tag,
+                modified=download_response.content.modified,
+                data=download_response.content.data,
+            )
+        except:
+            await download_response.content.data.aclose()
+            raise
 
     async def headdownload(
         self, request: m.HeadDownloadRequest
@@ -158,6 +162,8 @@ class Service:
 
         if download_response.content is None:
             raise e.ContentNotFoundError(request.id)
+
+        await download_response.content.data.aclose()
 
         return m.HeadDownloadResponse(
             type=download_response.content.type,

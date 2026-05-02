@@ -1,4 +1,4 @@
-from collections.abc import AsyncGenerator, Mapping
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Annotated, cast
 
@@ -7,7 +7,6 @@ from litestar import Request, handlers
 from litestar.channels import ChannelsPlugin
 from litestar.datastructures import ResponseHeader
 from litestar.di import Provide
-from litestar.exceptions import InternalServerException
 from litestar.openapi.spec import (
     OpenAPIFormat,
     OpenAPIMediaType,
@@ -298,27 +297,19 @@ class Controller(BaseController):
         request: Request,
     ) -> None:
         """Upload media content by ID."""
-
-        async def _stream(request: Request) -> AsyncGenerator[bytes]:
-            stream = request.stream()
-            while True:
-                try:
-                    chunk = await anext(stream)
-                except (StopAsyncIteration, InternalServerException):
-                    break
-
-                yield chunk
-
-        req = m.UploadRequest(id=id.root, type=type.root, data=_stream(request))
+        data = request.stream()
 
         try:
-            await service.upload(req)
-        except e.ValidationError as ex:
-            raise BadRequestException from ex
-        except e.MediaNotFoundError as ex:
-            raise NotFoundException from ex
-        except e.ContentNotFoundError as ex:
-            raise NotFoundException from ex
+            req = m.UploadRequest(id=id.root, type=type.root, data=data)
+
+            try:
+                await service.upload(req)
+            except e.ValidationError as ex:
+                raise BadRequestException from ex
+            except e.MediaNotFoundError as ex:
+                raise NotFoundException from ex
+        finally:
+            await data.aclose()
 
     @handlers.get(
         "/{id:str}/content",
@@ -372,15 +363,19 @@ class Controller(BaseController):
         except e.ContentNotFoundError as ex:
             raise NotFoundException from ex
 
-        return Stream(
-            response.data,
-            headers={
-                "Content-Type": str(response.type),
-                "Content-Length": str(response.size),
-                "ETag": response.tag,
-                "Last-Modified": httpstringify(response.modified),
-            },
-        )
+        try:
+            return Stream(
+                response.data,
+                headers={
+                    "Content-Type": str(response.type),
+                    "Content-Length": str(response.size),
+                    "ETag": response.tag,
+                    "Last-Modified": httpstringify(response.modified),
+                },
+            )
+        except:
+            await response.data.aclose()
+            raise
 
     @handlers.head(
         "/{id:str}/content",
@@ -414,17 +409,17 @@ class Controller(BaseController):
         self,
         service: Service,
         id: Annotated[  # noqa: A002
-            Serializable[m.DownloadRequestId],
+            Serializable[m.HeadDownloadRequestId],
             Parameter(
                 description="Identifier of the media to get content headers for.",
             ),
         ],
     ) -> None:
         """Get media content headers by ID."""
-        request = m.DownloadRequest(id=id.root)
+        request = m.HeadDownloadRequest(id=id.root)
 
         try:
-            response = await service.download(request)
+            response = await service.headdownload(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
         except e.MediaNotFoundError as ex:
