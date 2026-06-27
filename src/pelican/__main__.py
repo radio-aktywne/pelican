@@ -6,7 +6,7 @@ from pelican.config.builder import ConfigBuilder
 from pelican.config.errors import ConfigError
 from pelican.console import FallbackConsoleBuilder
 from pelican.server import Server
-from pelican.services.graphite.migrator import GraphiteMigrator
+from pelican.services.data.graphite.migrator import GraphiteMigrator
 
 cli = CliBuilder().build()
 

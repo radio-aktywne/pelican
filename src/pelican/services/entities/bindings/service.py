@@ -3,57 +3,30 @@ from contextlib import contextmanager
 from typing import cast
 
 from fractional_indexing import FIError, validate_order_key
-from litestar.channels import ChannelsPlugin
 
-from pelican.models.events import bindings as ev
-from pelican.models.events.types import Event
-from pelican.services.bindings import errors as e
-from pelican.services.bindings import models as m
-from pelican.services.graphite import errors as ge
-from pelican.services.graphite import types as gt
-from pelican.services.graphite.service import GraphiteService
+from pelican.services.data.graphite import errors as ge
+from pelican.services.data.graphite import types as gt
+from pelican.services.data.graphite.service import GraphiteService
+from pelican.services.entities.bindings import errors as e
+from pelican.services.entities.bindings import models as m
 
 
 class BindingsService:
     """Service to manage bindings."""
 
-    def __init__(self, graphite: GraphiteService, channels: ChannelsPlugin) -> None:
+    def __init__(self, graphite: GraphiteService) -> None:
         self._graphite = graphite
-        self._channels = channels
-
-    def _emit_event(self, event: Event) -> None:
-        data = event.model_dump_json(round_trip=True)
-        self._channels.publish(data, "events")
-
-    def _emit_binding_created_event(self, binding: m.Binding) -> None:
-        self._emit_event(
-            ev.BindingCreatedEvent(
-                data=ev.BindingCreatedEventData(binding=ev.Binding.map(binding))
-            )
-        )
-
-    def _emit_binding_updated_event(self, binding: m.Binding) -> None:
-        self._emit_event(
-            ev.BindingUpdatedEvent(
-                data=ev.BindingUpdatedEventData(binding=ev.Binding.map(binding))
-            )
-        )
-
-    def _emit_binding_deleted_event(self, binding: m.Binding) -> None:
-        self._emit_event(
-            ev.BindingDeletedEvent(
-                data=ev.BindingDeletedEventData(binding=ev.Binding.map(binding))
-            )
-        )
 
     @contextmanager
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
+        except ge.UniqueViolationError as ex:
+            raise e.ConflictError from ex
         except ge.DataError as ex:
             raise e.ValidationError from ex
         except ge.ServiceError as ex:
-            raise e.GraphiteError from ex
+            raise e.ServiceError from ex
 
     def _validate_rank(self, rank: str) -> None:
         try:
@@ -102,8 +75,6 @@ class BindingsService:
                 include=request.include,
             )
 
-        self._emit_binding_created_event(binding)
-
         return m.CreateResponse(binding=binding)
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
@@ -121,8 +92,6 @@ class BindingsService:
         if binding is None:
             return m.UpdateResponse(binding=None)
 
-        self._emit_binding_updated_event(binding)
-
         return m.UpdateResponse(binding=binding)
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
@@ -134,7 +103,5 @@ class BindingsService:
 
         if binding is None:
             return m.DeleteResponse(binding=None)
-
-        self._emit_binding_deleted_event(binding)
 
         return m.DeleteResponse(binding=binding)

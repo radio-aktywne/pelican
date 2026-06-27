@@ -3,7 +3,7 @@ from typing import Self
 from uuid import UUID
 
 from pelican.models.base import SerializableModel, datamodel
-from pelican.services.bindings import models as bm
+from pelican.services.entities.bindings import models as bm
 
 
 class Playlist(SerializableModel):
@@ -16,11 +16,11 @@ class Playlist(SerializableModel):
     """Name of the playlist."""
 
     bindings: Sequence["Binding"] | None
-    """Bindings that the playlist belongs to."""
+    """Bindings the playlist belongs to."""
 
     @classmethod
     def map(cls, playlist: bm.Playlist) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             id=UUID(playlist.id),
             name=playlist.name,
@@ -42,11 +42,11 @@ class Media(SerializableModel):
     """Name of the media."""
 
     bindings: Sequence["Binding"] | None
-    """Bindings that the media belongs to."""
+    """Bindings the media belongs to."""
 
     @classmethod
     def map(cls, media: bm.Media) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             id=UUID(media.id),
             name=media.name,
@@ -65,23 +65,23 @@ class Binding(SerializableModel):
     """Identifier of the binding."""
 
     playlist_id: UUID
-    """Identifier of the playlist that the binding belongs to."""
+    """Identifier of the playlist the binding belongs to."""
 
     media_id: UUID
-    """Identifier of the media that the binding belongs to."""
+    """Identifier of the media the binding belongs to."""
 
     rank: str
     """Rank of the media in the binding."""
 
     playlist: Playlist | None
-    """Playlist that the binding belongs to."""
+    """Playlist the binding belongs to."""
 
     media: Media | None
-    """Media that the binding belongs to."""
+    """Media the binding belongs to."""
 
     @classmethod
     def map(cls, binding: bm.Binding) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             id=UUID(binding.id),
             playlist_id=UUID(binding.playlistId),
@@ -108,66 +108,35 @@ class BindingList(SerializableModel):
     """Bindings that matched the request."""
 
 
-BindingWhereInput = bm.BindingWhereInput
-
-BindingWhereUniqueIdInput = bm.BindingWhereUniqueIdInput
-
-BindingWhereUniquePlaylistIdRankInput = bm.BindingWhereUniquePlaylistIdRankInput
-
-type BindingWhereUniqueInput = (
-    BindingWhereUniqueIdInput | BindingWhereUniquePlaylistIdRankInput
-)
-
-BindingInclude = bm.BindingInclude
-
-BindingOrderByIdInput = bm.BindingOrderByIdInput
-
-BindingOrderByPlaylistIdInput = bm.BindingOrderByPlaylistIdInput
-
-BindingOrderByMediaIdInput = bm.BindingOrderByMediaIdInput
-
-BindingOrderByRankInput = bm.BindingOrderByRankInput
-
-type BindingOrderByInput = (
-    BindingOrderByIdInput
-    | BindingOrderByPlaylistIdInput
-    | BindingOrderByMediaIdInput
-    | BindingOrderByRankInput
-)
-
-BindingCreateInput = bm.BindingCreateInput
-
-BindingUpdateInput = bm.BindingUpdateInput
-
 type ListRequestLimit = int | None
 
 type ListRequestOffset = int | None
 
-type ListRequestWhere = BindingWhereInput | None
+type ListRequestWhere = bm.BindingWhereInput | None
 
-type ListRequestInclude = BindingInclude | None
+type ListRequestInclude = bm.BindingInclude | None
 
-type ListRequestOrder = BindingOrderByInput | Sequence[BindingOrderByInput] | None
+type ListRequestOrder = bm.BindingOrderByInput | Sequence[bm.BindingOrderByInput] | None
 
 type ListResponseResults = BindingList
 
 type GetRequestId = UUID
 
-type GetRequestInclude = BindingInclude | None
+type GetRequestInclude = bm.BindingInclude | None
 
 type GetResponseBinding = Binding
 
-type CreateRequestData = BindingCreateInput
+type CreateRequestData = bm.BindingCreateInput
 
-type CreateRequestInclude = BindingInclude | None
+type CreateRequestInclude = bm.BindingInclude | None
 
 type CreateResponseBinding = Binding
 
-type UpdateRequestData = BindingUpdateInput
+type UpdateRequestData = bm.BindingUpdateInput
 
 type UpdateRequestId = UUID
 
-type UpdateRequestInclude = BindingInclude | None
+type UpdateRequestInclude = bm.BindingInclude | None
 
 type UpdateResponseBinding = Binding
 

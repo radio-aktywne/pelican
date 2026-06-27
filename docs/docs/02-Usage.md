@@ -8,7 +8,7 @@ title: Usage
 You can manage media, playlists and bindings using
 the `/media`, `/playlists` and `/bindings` endpoints.
 The API follows RESTful conventions,
-so you can use the following HTTP methods:
+so you can use the following HTTP methods wherever applicable:
 
 - `GET` to retrieve a resource or a list of resources
 - `POST` to create a new resource

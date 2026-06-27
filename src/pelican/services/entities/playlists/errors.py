@@ -6,5 +6,5 @@ class ValidationError(ServiceError):
     """Raised when a validation error occurs."""
 
 
-class GraphiteError(ServiceError):
-    """Raised when a graphite database operation fails."""
+class ConflictError(ValidationError):
+    """Raised when a conflict error occurs."""

@@ -1,10 +1,9 @@
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Annotated, cast
+from typing import Annotated, Any, cast
 
 from litestar import Controller as BaseController
 from litestar import Request, handlers
-from litestar.channels import ChannelsPlugin
 from litestar.datastructures import ResponseHeader
 from litestar.di import Provide
 from litestar.openapi.spec import (
@@ -19,15 +18,19 @@ from litestar.openapi.spec import (
 from litestar.params import Body, Parameter
 from litestar.response import Response, Stream
 from litestar.status_codes import HTTP_200_OK, HTTP_204_NO_CONTENT
+from pydantic import TypeAdapter
 
-from pelican.api.exceptions import BadRequestException, NotFoundException
+from pelican.api.exceptions import (
+    BadRequestException,
+    ConflictException,
+    NotFoundException,
+)
 from pelican.api.routes.media import errors as e
 from pelican.api.routes.media import models as m
 from pelican.api.routes.media.service import Service
 from pelican.models.base import Jsonable, Serializable
-from pelican.services.media.service import MediaService
+from pelican.services.entities.media.service import MediaService
 from pelican.state import State
-from pelican.utils.time import httpstringify
 
 
 @dataclass
@@ -67,12 +70,8 @@ class DownloadOperation(Operation):
 class DependenciesBuilder:
     """Builder for the dependencies of the controller."""
 
-    async def _build_service(self, state: State, channels: ChannelsPlugin) -> Service:
-        return Service(
-            media=MediaService(
-                graphite=state.graphite, minium=state.minium, channels=channels
-            )
-        )
+    async def _build_service(self, state: State) -> Service:
+        return Service(media=MediaService(graphite=state.graphite, minium=state.minium))
 
     def build(self) -> Mapping[str, Provide]:
         """Build the dependencies."""
@@ -168,14 +167,14 @@ class Controller(BaseController):
             response = await service.get(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.MediaNotFoundError as ex:
+        except e.NotFoundError as ex:
             raise NotFoundException from ex
 
         return Response(Serializable(response.media))
 
     @handlers.post(
         summary="Create media",
-        raises=[BadRequestException],
+        raises=[BadRequestException, ConflictException],
     )
     async def create(
         self,
@@ -200,6 +199,8 @@ class Controller(BaseController):
 
         try:
             response = await service.create(request)
+        except e.ConflictError as ex:
+            raise ConflictException from ex
         except e.ValidationError as ex:
             raise BadRequestException from ex
 
@@ -208,7 +209,7 @@ class Controller(BaseController):
     @handlers.patch(
         "/{id:str}",
         summary="Update media",
-        raises=[BadRequestException, NotFoundException],
+        raises=[BadRequestException, NotFoundException, ConflictException],
     )
     async def update(
         self,
@@ -239,9 +240,11 @@ class Controller(BaseController):
 
         try:
             response = await service.update(request)
+        except e.ConflictError as ex:
+            raise ConflictException from ex
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.MediaNotFoundError as ex:
+        except e.NotFoundError as ex:
             raise NotFoundException from ex
 
         return Response(Serializable(response.media))
@@ -268,7 +271,7 @@ class Controller(BaseController):
             await service.delete(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.MediaNotFoundError as ex:
+        except e.NotFoundError as ex:
             raise NotFoundException from ex
 
     @handlers.put(
@@ -306,7 +309,7 @@ class Controller(BaseController):
                 await service.upload(req)
             except e.ValidationError as ex:
                 raise BadRequestException from ex
-            except e.MediaNotFoundError as ex:
+            except e.NotFoundError as ex:
                 raise NotFoundException from ex
         finally:
             await data.aclose()
@@ -358,21 +361,21 @@ class Controller(BaseController):
             response = await service.download(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.MediaNotFoundError as ex:
-            raise NotFoundException from ex
-        except e.ContentNotFoundError as ex:
+        except e.NotFoundError as ex:
             raise NotFoundException from ex
 
+        def dump(value: Any, type: Any) -> str:  # noqa: A002
+            return str(TypeAdapter(type).dump_python(value, mode="json"))
+
         try:
-            return Stream(
-                response.data,
-                headers={
-                    "Content-Type": str(response.type),
-                    "Content-Length": str(response.size),
-                    "ETag": response.tag,
-                    "Last-Modified": httpstringify(response.modified),
-                },
-            )
+            headers = {
+                "Content-Type": dump(response.type, m.DownloadResponseType),
+                "Content-Length": dump(response.size, m.DownloadResponseSize),
+                "ETag": dump(response.tag, m.DownloadResponseTag),
+                "Last-Modified": dump(response.modified, m.DownloadResponseModified),
+            }
+
+            return Stream(response.data, headers=headers)
         except:
             await response.data.aclose()
             raise
@@ -422,20 +425,17 @@ class Controller(BaseController):
             response = await service.headdownload(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.MediaNotFoundError as ex:
-            raise NotFoundException from ex
-        except e.ContentNotFoundError as ex:
+        except e.NotFoundError as ex:
             raise NotFoundException from ex
 
-        return cast(
-            "None",
-            Response(
-                None,
-                headers={
-                    "Content-Type": str(response.type),
-                    "Content-Length": str(response.size),
-                    "ETag": response.tag,
-                    "Last-Modified": httpstringify(response.modified),
-                },
-            ),
-        )
+        def dump(value: Any, type: Any) -> str:  # noqa: A002
+            return str(TypeAdapter(type).dump_python(value, mode="json"))
+
+        headers = {
+            "Content-Type": dump(response.type, m.HeadDownloadResponseType),
+            "Content-Length": dump(response.size, m.HeadDownloadResponseSize),
+            "ETag": dump(response.tag, m.HeadDownloadResponseTag),
+            "Last-Modified": dump(response.modified, m.HeadDownloadResponseModified),
+        }
+
+        return cast("None", Response(None, headers=headers))

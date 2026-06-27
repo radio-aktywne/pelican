@@ -3,9 +3,9 @@ from contextlib import contextmanager
 
 from pelican.api.routes.media import errors as e
 from pelican.api.routes.media import models as m
-from pelican.services.media import errors as me
-from pelican.services.media import models as mm
-from pelican.services.media.service import MediaService
+from pelican.services.entities.media import errors as me
+from pelican.services.entities.media import models as mm
+from pelican.services.entities.media.service import MediaService
 
 
 class Service:
@@ -18,12 +18,10 @@ class Service:
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
+        except me.ConflictError as ex:
+            raise e.ConflictError from ex
         except me.ValidationError as ex:
             raise e.ValidationError from ex
-        except me.GraphiteError as ex:
-            raise e.GraphiteError from ex
-        except me.MiniumError as ex:
-            raise e.MiniumError from ex
         except me.ServiceError as ex:
             raise e.ServiceError from ex
 
@@ -64,7 +62,7 @@ class Service:
             get_response = await self._media.get(get_request)
 
         if get_response.media is None:
-            raise e.MediaNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.GetResponse(media=m.Media.map(get_response.media))
 
@@ -87,7 +85,7 @@ class Service:
             update_response = await self._media.update(update_request)
 
         if update_response.media is None:
-            raise e.MediaNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.UpdateResponse(media=m.Media.map(update_response.media))
 
@@ -99,7 +97,7 @@ class Service:
             delete_response = await self._media.delete(delete_request)
 
         if delete_response.media is None:
-            raise e.MediaNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.DeleteResponse()
 
@@ -115,7 +113,7 @@ class Service:
             upload_response = await self._media.upload(upload_request)
 
         if upload_response.media is None:
-            raise e.MediaNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.UploadResponse()
 
@@ -129,10 +127,10 @@ class Service:
             download_response = await self._media.download(download_request)
 
         if download_response.media is None:
-            raise e.MediaNotFoundError(request.id)
+            raise e.NotFoundError
 
         if download_response.content is None:
-            raise e.ContentNotFoundError(request.id)
+            raise e.NotFoundError
 
         try:
             return m.DownloadResponse(
@@ -158,10 +156,10 @@ class Service:
             download_response = await self._media.download(download_request)
 
         if download_response.media is None:
-            raise e.MediaNotFoundError(request.id)
+            raise e.NotFoundError
 
         if download_response.content is None:
-            raise e.ContentNotFoundError(request.id)
+            raise e.NotFoundError
 
         await download_response.content.data.aclose()
 

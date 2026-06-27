@@ -1,11 +1,11 @@
 from collections.abc import AsyncGenerator, AsyncIterator, Sequence
-from datetime import datetime
 from typing import Self
 from uuid import UUID
 
 from pelican.models.base import SerializableModel, datamodel
-from pelican.services.media import models as mm
+from pelican.services.entities.media import models as mm
 from pelican.utils.mime import MimeType
+from pelican.utils.time import HTTPDatetime
 
 
 class Binding(SerializableModel):
@@ -15,23 +15,23 @@ class Binding(SerializableModel):
     """Identifier of the binding."""
 
     playlist_id: UUID
-    """Identifier of the playlist that the binding belongs to."""
+    """Identifier of the playlist the binding belongs to."""
 
     media_id: UUID
-    """Identifier of the media that the binding belongs to."""
+    """Identifier of the media the binding belongs to."""
 
     rank: str
     """Rank of the media in the binding."""
 
     playlist: "Playlist | None"
-    """Playlist that the binding belongs to."""
+    """Playlist the binding belongs to."""
 
     media: "Media | None"
-    """Media that the binding belongs to."""
+    """Media the binding belongs to."""
 
     @classmethod
     def map(cls, binding: mm.Binding) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             id=UUID(binding.id),
             playlist_id=UUID(binding.playlistId),
@@ -52,11 +52,11 @@ class Playlist(SerializableModel):
     """Name of the playlist."""
 
     bindings: Sequence[Binding] | None
-    """Bindings that the playlist belongs to."""
+    """Bindings the playlist belongs to."""
 
     @classmethod
     def map(cls, playlist: mm.Playlist) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             id=UUID(playlist.id),
             name=playlist.name,
@@ -78,11 +78,11 @@ class Media(SerializableModel):
     """Name of the media."""
 
     bindings: Sequence[Binding] | None
-    """Bindings that the media belongs to."""
+    """Bindings the media belongs to."""
 
     @classmethod
     def map(cls, media: mm.Media) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             id=UUID(media.id),
             name=media.name,
@@ -110,55 +110,35 @@ class MediaList(SerializableModel):
     """Media that matched the request."""
 
 
-MediaWhereInput = mm.MediaWhereInput
-
-MediaWhereUniqueIdInput = mm.MediaWhereUniqueIdInput
-
-MediaWhereUniqueNameInput = mm.MediaWhereUniqueNameInput
-
-type MediaWhereUniqueInput = MediaWhereUniqueIdInput | MediaWhereUniqueNameInput
-
-MediaInclude = mm.MediaInclude
-
-MediaOrderByIdInput = mm.MediaOrderByIdInput
-
-MediaOrderByNameInput = mm.MediaOrderByNameInput
-
-type MediaOrderByInput = MediaOrderByIdInput | MediaOrderByNameInput
-
-MediaCreateInput = mm.MediaCreateInput
-
-MediaUpdateInput = mm.MediaUpdateInput
-
 type ListRequestLimit = int | None
 
 type ListRequestOffset = int | None
 
-type ListRequestWhere = MediaWhereInput | None
+type ListRequestWhere = mm.MediaWhereInput | None
 
-type ListRequestInclude = MediaInclude | None
+type ListRequestInclude = mm.MediaInclude | None
 
-type ListRequestOrder = MediaOrderByInput | Sequence[MediaOrderByInput] | None
+type ListRequestOrder = mm.MediaOrderByInput | Sequence[mm.MediaOrderByInput] | None
 
 type ListResponseResults = MediaList
 
 type GetRequestId = UUID
 
-type GetRequestInclude = MediaInclude | None
+type GetRequestInclude = mm.MediaInclude | None
 
 type GetResponseMedia = Media
 
-type CreateRequestData = MediaCreateInput
+type CreateRequestData = mm.MediaCreateInput
 
-type CreateRequestInclude = MediaInclude | None
+type CreateRequestInclude = mm.MediaInclude | None
 
 type CreateResponseMedia = Media
 
-type UpdateRequestData = MediaUpdateInput
+type UpdateRequestData = mm.MediaUpdateInput
 
 type UpdateRequestId = UUID
 
-type UpdateRequestInclude = MediaInclude | None
+type UpdateRequestInclude = mm.MediaInclude | None
 
 type UpdateResponseMedia = Media
 
@@ -178,7 +158,7 @@ type DownloadResponseSize = int
 
 type DownloadResponseTag = str
 
-type DownloadResponseModified = datetime
+type DownloadResponseModified = HTTPDatetime
 
 type DownloadResponseData = AsyncGenerator[bytes]
 
@@ -190,7 +170,7 @@ type HeadDownloadResponseSize = int
 
 type HeadDownloadResponseTag = str
 
-type HeadDownloadResponseModified = datetime
+type HeadDownloadResponseModified = HTTPDatetime
 
 
 @datamodel

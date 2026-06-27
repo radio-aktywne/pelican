@@ -2,8 +2,8 @@ from collections.abc import Sequence
 from typing import TypedDict
 
 from pelican.models.base import datamodel
-from pelican.services.graphite import models as gm
-from pelican.services.graphite import types as gt
+from pelican.services.data.graphite import models as gm
+from pelican.services.data.graphite import types as gt
 
 Media = gm.Media
 

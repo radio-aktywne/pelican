@@ -13,5 +13,5 @@ class InvalidRankError(ValidationError):
         super().__init__(f"Rank is not a valid fractional indexing key: {value}.")
 
 
-class GraphiteError(ServiceError):
-    """Raised when a graphite database operation fails."""
+class ConflictError(ValidationError):
+    """Raised when a conflict error occurs."""

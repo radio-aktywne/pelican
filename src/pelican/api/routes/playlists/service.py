@@ -3,9 +3,9 @@ from contextlib import contextmanager
 
 from pelican.api.routes.playlists import errors as e
 from pelican.api.routes.playlists import models as m
-from pelican.services.playlists import errors as pe
-from pelican.services.playlists import models as pm
-from pelican.services.playlists.service import PlaylistsService
+from pelican.services.entities.playlists import errors as pe
+from pelican.services.entities.playlists import models as pm
+from pelican.services.entities.playlists.service import PlaylistsService
 
 
 class Service:
@@ -18,10 +18,10 @@ class Service:
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
+        except pe.ConflictError as ex:
+            raise e.ConflictError from ex
         except pe.ValidationError as ex:
             raise e.ValidationError from ex
-        except pe.GraphiteError as ex:
-            raise e.GraphiteError from ex
         except pe.ServiceError as ex:
             raise e.ServiceError from ex
 
@@ -64,7 +64,7 @@ class Service:
             get_response = await self._playlists.get(get_request)
 
         if get_response.playlist is None:
-            raise e.PlaylistNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.GetResponse(playlist=m.Playlist.map(get_response.playlist))
 
@@ -87,7 +87,7 @@ class Service:
             update_response = await self._playlists.update(update_request)
 
         if update_response.playlist is None:
-            raise e.PlaylistNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.UpdateResponse(playlist=m.Playlist.map(update_response.playlist))
 
@@ -99,7 +99,7 @@ class Service:
             delete_response = await self._playlists.delete(delete_request)
 
         if delete_response.playlist is None:
-            raise e.PlaylistNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.DeleteResponse()
 
@@ -111,7 +111,7 @@ class Service:
             m3u_response = await self._playlists.m3u(m3u_request)
 
         if m3u_response.m3u is None:
-            raise e.PlaylistNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.M3UResponse(m3u=m3u_response.m3u)
 
@@ -123,6 +123,6 @@ class Service:
             m3u_response = await self._playlists.m3u(m3u_request)
 
         if m3u_response.m3u is None:
-            raise e.PlaylistNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.HeadM3UResponse(m3u=m3u_response.m3u)

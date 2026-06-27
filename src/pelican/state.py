@@ -1,8 +1,8 @@
 from litestar.datastructures import State as LitestarState
 
 from pelican.config.models import Config
-from pelican.services.graphite.service import GraphiteService
-from pelican.services.minium.service import MiniumService
+from pelican.services.data.graphite.service import GraphiteService
+from pelican.services.data.minium.service import MiniumService
 
 
 class State(LitestarState):
