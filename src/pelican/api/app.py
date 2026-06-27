@@ -16,8 +16,8 @@ from pelican.api.openapi import OpenAPIConfigBuilder
 from pelican.api.plugins.pydantic import PydanticPlugin
 from pelican.api.routes.router import router
 from pelican.config.models import Config
-from pelican.services.graphite.service import GraphiteService
-from pelican.services.minium.service import MiniumService
+from pelican.services.data.graphite.service import GraphiteService
+from pelican.services.data.minium.service import MiniumService
 from pelican.state import State
 
 

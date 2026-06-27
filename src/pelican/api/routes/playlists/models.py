@@ -3,7 +3,7 @@ from typing import Self
 from uuid import UUID
 
 from pelican.models.base import SerializableModel, datamodel
-from pelican.services.playlists import models as pm
+from pelican.services.entities.playlists import models as pm
 
 
 class Binding(SerializableModel):
@@ -13,23 +13,23 @@ class Binding(SerializableModel):
     """Identifier of the binding."""
 
     playlist_id: UUID
-    """Identifier of the playlist that the binding belongs to."""
+    """Identifier of the playlist the binding belongs to."""
 
     media_id: UUID
-    """Identifier of the media that the binding belongs to."""
+    """Identifier of the media the binding belongs to."""
 
     rank: str
     """Rank of the media in the binding."""
 
     playlist: "Playlist | None"
-    """Playlist that the binding belongs to."""
+    """Playlist the binding belongs to."""
 
     media: "Media | None"
-    """Media that the binding belongs to."""
+    """Media the binding belongs to."""
 
     @classmethod
     def map(cls, binding: pm.Binding) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             id=UUID(binding.id),
             playlist_id=UUID(binding.playlistId),
@@ -50,11 +50,11 @@ class Media(SerializableModel):
     """Name of the media."""
 
     bindings: Sequence[Binding] | None
-    """Bindings that the media belongs to."""
+    """Bindings the media belongs to."""
 
     @classmethod
     def map(cls, media: pm.Media) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             id=UUID(media.id),
             name=media.name,
@@ -76,11 +76,11 @@ class Playlist(SerializableModel):
     """Name of the playlist."""
 
     bindings: Sequence[Binding] | None
-    """Bindings that the playlist belongs to."""
+    """Bindings the playlist belongs to."""
 
     @classmethod
     def map(cls, playlist: pm.Playlist) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             id=UUID(playlist.id),
             name=playlist.name,
@@ -108,57 +108,37 @@ class PlaylistList(SerializableModel):
     """Playlists that matched the request."""
 
 
-PlaylistWhereInput = pm.PlaylistWhereInput
-
-PlaylistWhereUniqueIdInput = pm.PlaylistWhereUniqueIdInput
-
-PlaylistWhereUniqueNameInput = pm.PlaylistWhereUniqueNameInput
-
-type PlaylistWhereUniqueInput = (
-    PlaylistWhereUniqueIdInput | PlaylistWhereUniqueNameInput
-)
-
-PlaylistInclude = pm.PlaylistInclude
-
-PlaylistOrderByIdInput = pm.PlaylistOrderByIdInput
-
-PlaylistOrderByNameInput = pm.PlaylistOrderByNameInput
-
-type PlaylistOrderByInput = PlaylistOrderByIdInput | PlaylistOrderByNameInput
-
-PlaylistCreateInput = pm.PlaylistCreateInput
-
-PlaylistUpdateInput = pm.PlaylistUpdateInput
-
 type ListRequestLimit = int | None
 
 type ListRequestOffset = int | None
 
-type ListRequestWhere = PlaylistWhereInput | None
+type ListRequestWhere = pm.PlaylistWhereInput | None
 
-type ListRequestInclude = PlaylistInclude | None
+type ListRequestInclude = pm.PlaylistInclude | None
 
-type ListRequestOrder = PlaylistOrderByInput | Sequence[PlaylistOrderByInput] | None
+type ListRequestOrder = (
+    pm.PlaylistOrderByInput | Sequence[pm.PlaylistOrderByInput] | None
+)
 
 type ListResponseResults = PlaylistList
 
 type GetRequestId = UUID
 
-type GetRequestInclude = PlaylistInclude | None
+type GetRequestInclude = pm.PlaylistInclude | None
 
 type GetResponsePlaylist = Playlist
 
-type CreateRequestData = PlaylistCreateInput
+type CreateRequestData = pm.PlaylistCreateInput
 
-type CreateRequestInclude = PlaylistInclude | None
+type CreateRequestInclude = pm.PlaylistInclude | None
 
 type CreateResponsePlaylist = Playlist
 
-type UpdateRequestData = PlaylistUpdateInput
+type UpdateRequestData = pm.PlaylistUpdateInput
 
 type UpdateRequestId = UUID
 
-type UpdateRequestInclude = PlaylistInclude | None
+type UpdateRequestInclude = pm.PlaylistInclude | None
 
 type UpdateResponsePlaylist = Playlist
 

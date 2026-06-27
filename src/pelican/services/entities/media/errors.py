@@ -16,9 +16,5 @@ class UnsupportedContentTypeError(ValidationError):
         super().__init__(f"Unsupported content type: {content_type!s}.")
 
 
-class GraphiteError(ServiceError):
-    """Raised when a graphite database operation fails."""
-
-
-class MiniumError(ServiceError):
-    """Raised when a minium database operation fails."""
+class ConflictError(ValidationError):
+    """Raised when a conflict error occurs."""

@@ -12,8 +12,8 @@ from minio.error import MinioException, S3Error
 from urllib3 import BaseHTTPResponse
 
 from pelican.config.models import MiniumConfig
-from pelican.services.minium import errors as e
-from pelican.services.minium import models as m
+from pelican.services.data.minium import errors as e
+from pelican.services.data.minium import models as m
 from pelican.utils import asyncify, syncify
 from pelican.utils.read import ReadableIterator
 from pelican.utils.time import httpparse

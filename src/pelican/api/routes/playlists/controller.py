@@ -3,28 +3,29 @@ from typing import Annotated
 
 from litestar import Controller as BaseController
 from litestar import Request, handlers
-from litestar.channels import ChannelsPlugin
 from litestar.datastructures import ResponseHeader
 from litestar.di import Provide
 from litestar.params import Body, Parameter
 from litestar.response import Response
 
-from pelican.api.exceptions import BadRequestException, NotFoundException
+from pelican.api.exceptions import (
+    BadRequestException,
+    ConflictException,
+    NotFoundException,
+)
 from pelican.api.routes.playlists import errors as e
 from pelican.api.routes.playlists import models as m
 from pelican.api.routes.playlists.service import Service
 from pelican.models.base import Jsonable, Serializable
-from pelican.services.playlists.service import PlaylistsService
+from pelican.services.entities.playlists.service import PlaylistsService
 from pelican.state import State
 
 
 class DependenciesBuilder:
     """Builder for the dependencies of the controller."""
 
-    async def _build_service(self, state: State, channels: ChannelsPlugin) -> Service:
-        return Service(
-            playlists=PlaylistsService(graphite=state.graphite, channels=channels)
-        )
+    async def _build_service(self, state: State) -> Service:
+        return Service(playlists=PlaylistsService(graphite=state.graphite))
 
     def build(self) -> Mapping[str, Provide]:
         """Build the dependencies."""
@@ -120,14 +121,14 @@ class Controller(BaseController):
             response = await service.get(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.PlaylistNotFoundError as ex:
+        except e.NotFoundError as ex:
             raise NotFoundException from ex
 
         return Response(Serializable(response.playlist))
 
     @handlers.post(
         summary="Create playlist",
-        raises=[BadRequestException],
+        raises=[BadRequestException, ConflictException],
     )
     async def create(
         self,
@@ -152,6 +153,8 @@ class Controller(BaseController):
 
         try:
             response = await service.create(request)
+        except e.ConflictError as ex:
+            raise ConflictException from ex
         except e.ValidationError as ex:
             raise BadRequestException from ex
 
@@ -160,7 +163,7 @@ class Controller(BaseController):
     @handlers.patch(
         "/{id:str}",
         summary="Update playlist",
-        raises=[BadRequestException, NotFoundException],
+        raises=[BadRequestException, NotFoundException, ConflictException],
     )
     async def update(
         self,
@@ -193,9 +196,11 @@ class Controller(BaseController):
 
         try:
             response = await service.update(request)
+        except e.ConflictError as ex:
+            raise ConflictException from ex
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.PlaylistNotFoundError as ex:
+        except e.NotFoundError as ex:
             raise NotFoundException from ex
 
         return Response(Serializable(response.playlist))
@@ -222,7 +227,7 @@ class Controller(BaseController):
             await service.delete(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.PlaylistNotFoundError as ex:
+        except e.NotFoundError as ex:
             raise NotFoundException from ex
 
     @handlers.get(
@@ -256,7 +261,7 @@ class Controller(BaseController):
             response = await service.m3u(req)
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.PlaylistNotFoundError as ex:
+        except e.NotFoundError as ex:
             raise NotFoundException from ex
 
         return Response(response.m3u)
@@ -292,5 +297,5 @@ class Controller(BaseController):
             await service.headm3u(req)
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.PlaylistNotFoundError as ex:
+        except e.NotFoundError as ex:
             raise NotFoundException from ex

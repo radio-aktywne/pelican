@@ -2,82 +2,35 @@ from collections.abc import Generator, Sequence
 from contextlib import contextmanager
 from typing import cast
 
-from litestar.channels import ChannelsPlugin
-
-from pelican.models.events import bindings as bev
-from pelican.models.events import media as mev
-from pelican.models.events.types import Event
-from pelican.services.graphite import errors as ge
-from pelican.services.graphite import types as gt
-from pelican.services.graphite.service import GraphiteService
-from pelican.services.media import errors as e
-from pelican.services.media import models as m
-from pelican.services.media.utils import ContentTypeChecker
-from pelican.services.minium import errors as me
-from pelican.services.minium import models as mm
-from pelican.services.minium.service import MiniumService
+from pelican.services.data.graphite import errors as ge
+from pelican.services.data.graphite import types as gt
+from pelican.services.data.graphite.service import GraphiteService
+from pelican.services.data.minium import errors as me
+from pelican.services.data.minium import models as mm
+from pelican.services.data.minium.service import MiniumService
+from pelican.services.entities.media import errors as e
+from pelican.services.entities.media import models as m
+from pelican.services.entities.media.utils import ContentTypeChecker
 from pelican.utils.mime import MimeType, MimeTypeValidationError
 
 
 class MediaService:
     """Service to manage media."""
 
-    def __init__(
-        self, graphite: GraphiteService, minium: MiniumService, channels: ChannelsPlugin
-    ) -> None:
+    def __init__(self, graphite: GraphiteService, minium: MiniumService) -> None:
         self._graphite = graphite
         self._minium = minium
-        self._channels = channels
-
-    def _emit_event(self, event: Event) -> None:
-        data = event.model_dump_json(round_trip=True)
-        self._channels.publish(data, "events")
-
-    def _emit_media_created_event(self, media: m.Media) -> None:
-        self._emit_event(
-            mev.MediaCreatedEvent(
-                data=mev.MediaCreatedEventData(media=mev.Media.map(media))
-            )
-        )
-
-    def _emit_media_updated_event(self, media: m.Media) -> None:
-        self._emit_event(
-            mev.MediaUpdatedEvent(
-                data=mev.MediaUpdatedEventData(media=mev.Media.map(media))
-            )
-        )
-
-    def _emit_media_deleted_event(self, media: m.Media) -> None:
-        self._emit_event(
-            mev.MediaDeletedEvent(
-                data=mev.MediaDeletedEventData(media=mev.Media.map(media))
-            )
-        )
-
-    def _emit_binding_updated_event(self, binding: m.Binding) -> None:
-        self._emit_event(
-            bev.BindingUpdatedEvent(
-                data=bev.BindingUpdatedEventData(binding=bev.Binding.map(binding))
-            )
-        )
-
-    def _emit_binding_deleted_event(self, binding: m.Binding) -> None:
-        self._emit_event(
-            bev.BindingDeletedEvent(
-                data=bev.BindingDeletedEventData(binding=bev.Binding.map(binding))
-            )
-        )
 
     @contextmanager
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
+        except ge.UniqueViolationError as ex:
+            raise e.ConflictError from ex
         except ge.DataError as ex:
             raise e.ValidationError from ex
-        except ge.ServiceError as ex:
-            raise e.GraphiteError from ex
-        except me.ServiceError as ex:
-            raise e.MiniumError from ex
+        except (ge.ServiceError, me.ServiceError) as ex:
+            raise e.ServiceError from ex
 
     async def count(self, request: m.CountRequest) -> m.CountResponse:
         """Count media."""
@@ -117,37 +70,7 @@ class MediaService:
                 data=cast("gt.MediaCreateInput", request.data), include=request.include
             )
 
-        self._emit_media_created_event(media)
-
         return m.CreateResponse(media=media)
-
-    async def _update_handle_bindings(
-        self, transaction: GraphiteService, old: m.Media, new: m.Media
-    ) -> Sequence[m.Binding]:
-        bindings = []
-
-        if new.id != old.id:
-            bindings = await transaction.binding.find_many(where={"mediaId": old.id})
-
-            ids = [binding.id for binding in bindings]
-
-            await transaction.binding.delete_many(where={"id": {"in": ids}})
-
-            await transaction.binding.create_many(
-                data=[
-                    {
-                        "id": binding.id,
-                        "playlistId": binding.playlistId,
-                        "mediaId": new.id,
-                        "rank": binding.rank,
-                    }
-                    for binding in bindings
-                ]
-            )
-
-            bindings = await transaction.binding.find_many(where={"id": {"in": ids}})
-
-        return bindings
 
     async def _update_handle_content(self, old: m.Media, new: m.Media) -> None:
         if new.id != old.id:
@@ -178,25 +101,9 @@ class MediaService:
                 if new is None:
                     return m.UpdateResponse(media=None)
 
-                bindings = await self._update_handle_bindings(transaction, old, new)
                 await self._update_handle_content(old, new)
 
-        self._emit_media_updated_event(new)
-        for binding in bindings:
-            self._emit_binding_updated_event(binding)
-
         return m.UpdateResponse(media=new)
-
-    async def _delete_handle_bindings(
-        self, transaction: GraphiteService, media: m.Media
-    ) -> Sequence[m.Binding]:
-        bindings = await transaction.binding.find_many(where={"mediaId": media.id})
-
-        await transaction.binding.delete_many(
-            where={"id": {"in": [binding.id for binding in bindings]}}
-        )
-
-        return bindings
 
     async def _delete_handle_content(self, media: m.Media) -> None:
         try:
@@ -216,12 +123,7 @@ class MediaService:
                 if media is None:
                     return m.DeleteResponse(media=None)
 
-                deleted = await self._delete_handle_bindings(transaction, media)
                 await self._delete_handle_content(media)
-
-        self._emit_media_deleted_event(media)
-        for binding in deleted:
-            self._emit_binding_deleted_event(binding)
 
         return m.DeleteResponse(media=media)
 

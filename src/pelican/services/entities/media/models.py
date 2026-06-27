@@ -2,8 +2,8 @@ from collections.abc import AsyncGenerator, AsyncIterator, Sequence
 from datetime import datetime
 
 from pelican.models.base import datamodel
-from pelican.services.graphite import models as gm
-from pelican.services.graphite import types as gt
+from pelican.services.data.graphite import models as gm
+from pelican.services.data.graphite import types as gt
 from pelican.utils.mime import MimeType
 
 Binding = gm.Binding

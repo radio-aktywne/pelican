@@ -19,7 +19,7 @@ model Media {
   /// Name of the media
   name String @unique(map: "media_name_unique") @map("name") @db.Text
 
-  /// Bindings that the media belongs to
+  /// Bindings the media belongs to
   bindings Binding[]
 
   @@map("media")
@@ -32,7 +32,7 @@ model Playlist {
   /// Name of the playlist
   name String @unique(map: "playlists_name_unique") @map("name") @db.Text
 
-  /// Bindings that the playlist belongs to
+  /// Bindings the playlist belongs to
   bindings Binding[]
 
   @@map("playlists")
@@ -49,9 +49,9 @@ model Binding {
   /// Rank of the media in the playlist
   rank       String @map("rank") @db.Text
 
-  /// Playlist that the binding belongs to
+  /// Playlist the binding belongs to
   playlist Playlist @relation(fields: [playlistId], references: [id], map: "bindings_playlist_id_fkey", onDelete: Cascade, onUpdate: Cascade)
-  /// Media that the binding belongs to
+  /// Media the binding belongs to
   media    Media    @relation(fields: [mediaId], references: [id], map: "bindings_media_id_fkey", onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([playlistId, rank], map: "bindings_playlist_id_rank_unique")

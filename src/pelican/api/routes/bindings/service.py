@@ -3,9 +3,9 @@ from contextlib import contextmanager
 
 from pelican.api.routes.bindings import errors as e
 from pelican.api.routes.bindings import models as m
-from pelican.services.bindings import errors as be
-from pelican.services.bindings import models as bm
-from pelican.services.bindings.service import BindingsService
+from pelican.services.entities.bindings import errors as be
+from pelican.services.entities.bindings import models as bm
+from pelican.services.entities.bindings.service import BindingsService
 
 
 class Service:
@@ -18,10 +18,10 @@ class Service:
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
+        except be.ConflictError as ex:
+            raise e.ConflictError from ex
         except be.ValidationError as ex:
             raise e.ValidationError from ex
-        except be.GraphiteError as ex:
-            raise e.GraphiteError from ex
         except be.ServiceError as ex:
             raise e.ServiceError from ex
 
@@ -62,7 +62,7 @@ class Service:
             get_response = await self._bindings.get(get_request)
 
         if get_response.binding is None:
-            raise e.BindingNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.GetResponse(binding=m.Binding.map(get_response.binding))
 
@@ -85,7 +85,7 @@ class Service:
             update_response = await self._bindings.update(update_request)
 
         if update_response.binding is None:
-            raise e.BindingNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.UpdateResponse(binding=m.Binding.map(update_response.binding))
 
@@ -97,6 +97,6 @@ class Service:
             delete_response = await self._bindings.delete(delete_request)
 
         if delete_response.binding is None:
-            raise e.BindingNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.DeleteResponse()
