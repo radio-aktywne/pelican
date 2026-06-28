@@ -365,7 +365,9 @@ class Controller(BaseController):
             raise NotFoundException from ex
 
         def dump(value: Any, type: Any) -> str:  # noqa: A002
-            return str(TypeAdapter(type).dump_python(value, mode="json"))
+            return str(
+                TypeAdapter(type).dump_python(value, mode="json", round_trip=True)
+            )
 
         try:
             headers = {
@@ -429,7 +431,9 @@ class Controller(BaseController):
             raise NotFoundException from ex
 
         def dump(value: Any, type: Any) -> str:  # noqa: A002
-            return str(TypeAdapter(type).dump_python(value, mode="json"))
+            return str(
+                TypeAdapter(type).dump_python(value, mode="json", round_trip=True)
+            )
 
         headers = {
             "Content-Type": dump(response.type, m.HeadDownloadResponseType),
