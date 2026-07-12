@@ -1,6 +1,5 @@
 from collections.abc import Generator, Sequence
 from contextlib import contextmanager
-from typing import cast
 
 from pelican.services.data.graphite import errors as ge
 from pelican.services.data.graphite import types as gt
@@ -62,7 +61,7 @@ class PlaylistsService:
         """Create playlist."""
         with self._handle_errors():
             playlist = await self._graphite.playlist.create(
-                data=cast("gt.PlaylistCreateInput", request.data),
+                data=gt.PlaylistCreateInput(**request.data),
                 include=request.include,
             )
 
@@ -78,7 +77,7 @@ class PlaylistsService:
                     return m.UpdateResponse(playlist=None)
 
                 new = await transaction.playlist.update(
-                    data=cast("gt.PlaylistUpdateInput", request.data),
+                    data=gt.PlaylistUpdateInput(**request.data),
                     where=request.where,
                     include=request.include,
                 )

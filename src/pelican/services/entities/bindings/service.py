@@ -1,6 +1,5 @@
 from collections.abc import Generator, Sequence
 from contextlib import contextmanager
-from typing import cast
 
 from fractional_indexing import FIError, validate_order_key
 
@@ -71,7 +70,7 @@ class BindingsService:
 
         with self._handle_errors():
             binding = await self._graphite.binding.create(
-                data=cast("gt.BindingCreateInput", request.data),
+                data=gt.BindingCreateInput(**request.data),
                 include=request.include,
             )
 
@@ -84,7 +83,7 @@ class BindingsService:
 
         with self._handle_errors():
             binding = await self._graphite.binding.update(
-                data=cast("gt.BindingUpdateInput", request.data),
+                data=gt.BindingUpdateInput(**request.data),
                 where=request.where,
                 include=request.include,
             )

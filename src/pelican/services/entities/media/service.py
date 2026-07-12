@@ -1,6 +1,5 @@
 from collections.abc import Generator, Sequence
 from contextlib import contextmanager
-from typing import cast
 
 from pelican.services.data.graphite import errors as ge
 from pelican.services.data.graphite import types as gt
@@ -67,7 +66,7 @@ class MediaService:
         """Create media."""
         with self._handle_errors():
             media = await self._graphite.media.create(
-                data=cast("gt.MediaCreateInput", request.data), include=request.include
+                data=gt.MediaCreateInput(**request.data), include=request.include
             )
 
         return m.CreateResponse(media=media)
@@ -93,7 +92,7 @@ class MediaService:
                     return m.UpdateResponse(media=None)
 
                 new = await transaction.media.update(
-                    data=cast("gt.MediaUpdateInput", request.data),
+                    data=gt.MediaUpdateInput(**request.data),
                     where=request.where,
                     include=request.include,
                 )
