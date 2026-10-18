@@ -8,6 +8,7 @@ from pelican.console import FallbackConsoleBuilder
 from pelican.server import Server
 from pelican.services.data.graphite.migrator import GraphiteMigrator
 
+
 cli = CliBuilder().build()
 
 

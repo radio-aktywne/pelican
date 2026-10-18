@@ -1,9 +1,8 @@
 from collections.abc import Mapping
 from typing import Annotated
 
-from litestar import Controller as BaseController
-from litestar import handlers
-from litestar.di import Provide
+from litestar import Controller as BaseController, handlers
+from litestar.di import NamedDependency, Provide
 from litestar.params import Body, Parameter
 from litestar.response import Response
 
@@ -12,8 +11,7 @@ from pelican.api.exceptions import (
     ConflictException,
     NotFoundException,
 )
-from pelican.api.routes.bindings import errors as e
-from pelican.api.routes.bindings import models as m
+from pelican.api.routes.bindings import errors as e, models as m
 from pelican.api.routes.bindings.service import Service
 from pelican.models.base import Jsonable, Serializable
 from pelican.services.entities.bindings.service import BindingsService
@@ -42,9 +40,9 @@ class Controller(BaseController):
         summary="List bindings",
         raises=[BadRequestException],
     )
-    async def list(  # noqa: PLR0913
+    async def list(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         limit: Annotated[
             Jsonable[m.ListRequestLimit] | None,
             Parameter(
@@ -99,7 +97,7 @@ class Controller(BaseController):
     )
     async def get(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.GetRequestId],
             Parameter(
@@ -131,7 +129,7 @@ class Controller(BaseController):
     )
     async def create(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         data: Annotated[
             Serializable[m.CreateRequestData],
             Body(
@@ -166,7 +164,7 @@ class Controller(BaseController):
     )
     async def update(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.UpdateRequestId],
             Parameter(
@@ -209,7 +207,7 @@ class Controller(BaseController):
     )
     async def delete(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.DeleteRequestId],
             Parameter(

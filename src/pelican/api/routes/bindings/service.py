@@ -1,10 +1,8 @@
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from pelican.api.routes.bindings import errors as e
-from pelican.api.routes.bindings import models as m
-from pelican.services.entities.bindings import errors as be
-from pelican.services.entities.bindings import models as bm
+from pelican.api.routes.bindings import errors as e, models as m
+from pelican.services.entities.bindings import errors as be, models as bm
 from pelican.services.entities.bindings.service import BindingsService
 
 

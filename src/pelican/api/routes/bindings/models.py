@@ -15,7 +15,7 @@ class Playlist(SerializableModel):
     name: str
     """Name of the playlist."""
 
-    bindings: Sequence["Binding"] | None
+    bindings: Sequence[Binding] | None
     """Bindings the playlist belongs to."""
 
     @classmethod
@@ -41,7 +41,7 @@ class Media(SerializableModel):
     name: str
     """Name of the media."""
 
-    bindings: Sequence["Binding"] | None
+    bindings: Sequence[Binding] | None
     """Bindings the media belongs to."""
 
     @classmethod

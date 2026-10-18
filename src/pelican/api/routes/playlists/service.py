@@ -1,10 +1,8 @@
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from pelican.api.routes.playlists import errors as e
-from pelican.api.routes.playlists import models as m
-from pelican.services.entities.playlists import errors as pe
-from pelican.services.entities.playlists import models as pm
+from pelican.api.routes.playlists import errors as e, models as m
+from pelican.services.entities.playlists import errors as pe, models as pm
 from pelican.services.entities.playlists.service import PlaylistsService
 
 

@@ -1,10 +1,8 @@
 from collections.abc import AsyncGenerator, Generator
 from contextlib import contextmanager
 
-from pelican.api.routes.sse import errors as e
-from pelican.api.routes.sse import models as m
-from pelican.services.events import errors as ee
-from pelican.services.events import models as em
+from pelican.api.routes.sse import errors as e, models as m
+from pelican.services.events import errors as ee, models as em
 from pelican.services.events.service import EventsService
 
 

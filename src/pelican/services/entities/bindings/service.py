@@ -3,11 +3,9 @@ from contextlib import contextmanager
 
 from fractional_indexing import FIError, validate_order_key
 
-from pelican.services.data.graphite import errors as ge
-from pelican.services.data.graphite import types as gt
+from pelican.services.data.graphite import errors as ge, types as gt
 from pelican.services.data.graphite.service import GraphiteService
-from pelican.services.entities.bindings import errors as e
-from pelican.services.entities.bindings import models as m
+from pelican.services.entities.bindings import errors as e, models as m
 
 
 class BindingsService:

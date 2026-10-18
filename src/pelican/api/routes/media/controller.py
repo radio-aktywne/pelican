@@ -2,10 +2,9 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Annotated, cast
 
-from litestar import Controller as BaseController
-from litestar import Request, handlers
+from litestar import Controller as BaseController, Request, handlers
 from litestar.datastructures import ResponseHeader
-from litestar.di import Provide
+from litestar.di import NamedDependency, Provide
 from litestar.openapi.spec import (
     OpenAPIFormat,
     OpenAPIMediaType,
@@ -15,7 +14,7 @@ from litestar.openapi.spec import (
     RequestBody,
     Schema,
 )
-from litestar.params import Body, Parameter
+from litestar.params import Body, HeaderParameter, Parameter
 from litestar.response import Response, Stream
 from litestar.status_codes import HTTP_200_OK, HTTP_204_NO_CONTENT
 
@@ -24,8 +23,7 @@ from pelican.api.exceptions import (
     ConflictException,
     NotFoundException,
 )
-from pelican.api.routes.media import errors as e
-from pelican.api.routes.media import models as m
+from pelican.api.routes.media import errors as e, models as m
 from pelican.api.routes.media.service import Service
 from pelican.models.base import Jsonable, Serializable
 from pelican.services.entities.media.service import MediaService
@@ -88,9 +86,9 @@ class Controller(BaseController):
         summary="List media",
         raises=[BadRequestException],
     )
-    async def list(  # noqa: PLR0913
+    async def list(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         limit: Annotated[
             Jsonable[m.ListRequestLimit] | None,
             Parameter(
@@ -145,7 +143,7 @@ class Controller(BaseController):
     )
     async def get(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.GetRequestId],
             Parameter(
@@ -177,7 +175,7 @@ class Controller(BaseController):
     )
     async def create(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         data: Annotated[
             Serializable[m.CreateRequestData],
             Body(
@@ -212,7 +210,7 @@ class Controller(BaseController):
     )
     async def update(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.UpdateRequestId],
             Parameter(
@@ -255,7 +253,7 @@ class Controller(BaseController):
     )
     async def delete(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.DeleteRequestId],
             Parameter(
@@ -282,7 +280,7 @@ class Controller(BaseController):
     )
     async def upload(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.UploadRequestId],
             Parameter(
@@ -291,8 +289,8 @@ class Controller(BaseController):
         ],
         type: Annotated[  # noqa: A002
             Jsonable[m.UploadRequestType],
-            Parameter(
-                header="Content-Type",
+            HeaderParameter(
+                name="Content-Type",
                 description="Content type.",
             ),
         ],
@@ -345,7 +343,7 @@ class Controller(BaseController):
     )
     async def download(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.DownloadRequestId],
             Parameter(
@@ -417,7 +415,7 @@ class Controller(BaseController):
     )
     async def headdownload(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.HeadDownloadRequestId],
             Parameter(

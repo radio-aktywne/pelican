@@ -23,10 +23,10 @@ class Binding(SerializableModel):
     rank: str
     """Rank of the media in the binding."""
 
-    playlist: "Playlist | None"
+    playlist: Playlist | None
     """Playlist the binding belongs to."""
 
-    media: "Media | None"
+    media: Media | None
     """Media the binding belongs to."""
 
     @classmethod
