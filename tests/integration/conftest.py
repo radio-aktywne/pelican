@@ -2,7 +2,7 @@ from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 from litestar import Litestar
 from litestar.testing import AsyncTestClient
 from prisma import Prisma

@@ -2,8 +2,7 @@ from litestar.channels import ChannelsPlugin
 
 from pelican.models.events import test as ev
 from pelican.models.events.types import Event
-from pelican.services.test import errors as e
-from pelican.services.test import models as m
+from pelican.services.test import errors as e, models as m
 
 
 class TestService:

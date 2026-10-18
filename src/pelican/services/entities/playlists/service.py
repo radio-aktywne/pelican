@@ -1,11 +1,9 @@
 from collections.abc import Generator, Sequence
 from contextlib import contextmanager
 
-from pelican.services.data.graphite import errors as ge
-from pelican.services.data.graphite import types as gt
+from pelican.services.data.graphite import errors as ge, types as gt
 from pelican.services.data.graphite.service import GraphiteService
-from pelican.services.entities.playlists import errors as e
-from pelican.services.entities.playlists import models as m
+from pelican.services.entities.playlists import errors as e, models as m
 from pelican.utils.m3u import M3U
 
 

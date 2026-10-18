@@ -1,10 +1,8 @@
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from pelican.api.routes.test import errors as e
-from pelican.api.routes.test import models as m
-from pelican.services.test import errors as te
-from pelican.services.test import models as tm
+from pelican.api.routes.test import errors as e, models as m
+from pelican.services.test import errors as te, models as tm
 from pelican.services.test.service import TestService
 
 

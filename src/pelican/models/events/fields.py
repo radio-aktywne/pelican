@@ -5,6 +5,7 @@ from pydantic import Field
 from pelican.models.base import SerializableModel
 from pelican.utils.time import UTCDatetime
 
+
 type TypeField[T] = Annotated[
     T,
     Field(description="Type of the event."),

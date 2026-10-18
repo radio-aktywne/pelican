@@ -7,6 +7,7 @@ from pelican.api.routes.playlists.router import router as playlists
 from pelican.api.routes.sse.router import router as sse
 from pelican.api.routes.test.router import router as test
 
+
 router = Router(
     path="/",
     route_handlers=[

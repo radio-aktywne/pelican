@@ -1,10 +1,8 @@
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from pelican.api.routes.ping import errors as e
-from pelican.api.routes.ping import models as m
-from pelican.services.ping import errors as pe
-from pelican.services.ping import models as pm
+from pelican.api.routes.ping import errors as e, models as m
+from pelican.services.ping import errors as pe, models as pm
 from pelican.services.ping.service import PingService
 
 
