@@ -146,24 +146,17 @@ class Service:
         self, request: m.HeadDownloadRequest
     ) -> m.HeadDownloadResponse:
         """Download media content headers."""
-        download_request = mm.DownloadRequest(
-            where={"id": str(request.id)}, include=None
-        )
+        headdownload_request = mm.HeadDownloadRequest(where={"id": str(request.id)})
 
         with self._handle_errors():
-            download_response = await self._media.download(download_request)
+            headdownload_response = await self._media.headdownload(headdownload_request)
 
-        if download_response.media is None:
+        if headdownload_response.content is None:
             raise e.NotFoundError
-
-        if download_response.content is None:
-            raise e.NotFoundError
-
-        await download_response.content.data.aclose()
 
         return m.HeadDownloadResponse(
-            type=download_response.content.type,
-            size=download_response.content.size,
-            tag=download_response.content.tag,
-            modified=download_response.content.modified,
+            type=headdownload_response.content.type,
+            size=headdownload_response.content.size,
+            tag=headdownload_response.content.tag,
+            modified=headdownload_response.content.modified,
         )

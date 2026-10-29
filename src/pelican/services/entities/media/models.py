@@ -65,6 +65,23 @@ class DownloadContent:
 
 
 @datamodel
+class HeadDownloadContent:
+    """Content model for headers download."""
+
+    type: MimeType
+    """Content type."""
+
+    size: int
+    """Size of the content in bytes."""
+
+    tag: str
+    """ETag of the content."""
+
+    modified: datetime
+    """Date and time when the content was last modified."""
+
+
+@datamodel
 class CountRequest:
     """Request to count media."""
 
@@ -229,3 +246,19 @@ class DownloadResponse:
 
     content: DownloadContent | None
     """Content that was downloaded."""
+
+
+@datamodel
+class HeadDownloadRequest:
+    """Request to download media content headers."""
+
+    where: MediaWhereUniqueInput
+    """Unique filter to apply to find media."""
+
+
+@datamodel
+class HeadDownloadResponse:
+    """Response for downloading media content headers."""
+
+    content: HeadDownloadContent | None
+    """Content headers that were downloaded."""

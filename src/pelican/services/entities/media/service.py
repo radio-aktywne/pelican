@@ -183,3 +183,36 @@ class MediaService:
         except:
             await download_response.content.data.aclose()
             raise
+
+    async def headdownload(
+        self, request: m.HeadDownloadRequest
+    ) -> m.HeadDownloadResponse:
+        """Download media content headers."""
+        with self._handle_errors():
+            media = await self._graphite.media.find_unique(where=request.where)
+
+            if media is None:
+                return m.HeadDownloadResponse(content=None)
+
+            try:
+                get_request = mm.GetRequest(name=media.id)
+                get_response = await self._minium.get(get_request)
+            except me.NotFoundError:
+                return m.HeadDownloadResponse(content=None)
+
+        try:
+            content_type = MimeType.parse(get_response.object.type)
+        except MimeTypeValidationError:
+            return m.HeadDownloadResponse(content=None)
+
+        if not ContentTypeChecker().check(content_type):
+            return m.HeadDownloadResponse(content=None)
+
+        return m.HeadDownloadResponse(
+            content=m.HeadDownloadContent(
+                type=content_type,
+                size=get_response.object.size,
+                tag=get_response.object.tag,
+                modified=get_response.object.modified,
+            )
+        )
