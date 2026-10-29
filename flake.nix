@@ -59,7 +59,6 @@
         prisma-engines = pkgs.multiverse.versions.prisma-engines."5.21.0";
         openssl = pkgs.openssl;
         usql = pkgs.usql;
-        mc = pkgs.minio-client;
         s5cmd = pkgs.s5cmd;
         tini = pkgs.tini;
         su-exec = pkgs.su-exec;
@@ -101,7 +100,6 @@
               prisma-engines
               openssl
               usql
-              mc
               s5cmd
             ];
 
