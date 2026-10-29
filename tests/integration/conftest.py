@@ -57,7 +57,7 @@ async def minium() -> AsyncGenerator[AsyncDockerContainer]:
 
     async def _check() -> None:
         async with AsyncClient(base_url="http://localhost:10210") as client:
-            response = await client.get("/minio/health/ready")
+            response = await client.get("/health/ready")
             response.raise_for_status()
 
     container = AsyncDockerContainer("ghcr.io/radio-aktywne/databases/minium:latest")
